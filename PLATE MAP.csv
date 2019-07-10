@@ -1,0 +1,19 @@
+sample,1,2,3,4,5,6,7,8,9,10,11,12
+a,H2O control ,Cetylpyridinium chloride,Tamoxifen,Sodium Fluoride,5-Fluorocytosine,Azaserine*,H2O control ,Cetylpyridinium chloride,Tamoxifen,Sodium Fluoride,5-Fluorocytosine,Azaserine*
+b,DMSO control,Compound 48/80*,EDTA,Tartaric acid,6-Azauracil,DTT,DMSO control,Compound 48/80*,EDTA,Tartaric acid,6-Azauracil,DTT
+c,ETOH control ,Caffeine,Chlorpromazine hydrochloride ,Sodium Orthovanadate,Blasticidin hydrochloride,Diamide,ETOH control ,Caffeine,Chlorpromazine hydrochloride ,Sodium Orthovanadate,Blasticidin hydrochloride,Diamide
+d,Nystatin ,Triclosan,Menadione ,Trifluoperazine,"3-Amino-1,2,4- triazole",Sodium Selenate,Nystatin ,Triclosan,Menadione ,Trifluoperazine,"3-Amino-1,2,4- triazole",Sodium Selenate
+e,Myclobutanil,Miltefosine,Poly-L-lysine hydrochloride,Pentamidine Isethionate,Thialysine,Urea hydrogen peroxide,Myclobutanil,Miltefosine,Poly-L-lysine hydrochloride,Pentamidine Isethionate,Thialysine,Urea hydrogen peroxide
+f,Fluconazole,Cinnamic acid,CCCP,methylmethane sulfonate,Hygromycin B,Thiourea,Fluconazole,Cinnamic acid,CCCP,methylmethane sulfonate,Hygromycin B,Thiourea
+g,Propiconazole,Sodium metasilicate,Dequalinium Chloride,Hydroxyurea,Cycloheximide,4-Aminopyridine,Propiconazole,Sodium metasilicate,Dequalinium Chloride,Hydroxyurea,Cycloheximide,4-Aminopyridine
+h,Miconazole Nitrate,Guanidine hydrochloride,2-Deoxy-D-glucose,5-Fluorouracil,Copper(II) sulfate,Benzamidine,Miconazole Nitrate,Guanidine hydrochloride,2-Deoxy-D-glucose,5-Fluorouracil,Copper(II) sulfate,Benzamidine
+,,,,,,,,,,,,
+sample,1,2,3,4,5,6,7,8,9,10,11,12
+a,H2O C,H2O, H2O,H2O,H2O,H2O,H2O C,H2O, H2O,H2O,H2O,H2O
+b,DMSO C,H2O,DMSO,H2O,DMSO,H2O,DMSO C,H2O,DMSO,H2O,DMSO,H2O
+c,ETOH C,H2O,H2O,H2O,H2O,H2O,ETOH C,H2O,H2O,H2O,H2O,H2O
+d,DMSO,DMSO,ETOH,H2O,H2O,H2O,DMSO,DMSO,ETOH,H2O,H2O,H2O
+e,ETOH,DMSO,H2O,H2O,H2O,H2O,ETOH,DMSO,H2O,H2O,H2O,H2O
+f,DMSO,DMSO,DMSO ,H2O,H2O,H2O,DMSO,DMSO,DMSO ,H2O,H2O,H2O
+g,ETOH,H2O,H2O,H2O,DMSO,H2O,ETOH,H2O,H2O,H2O,DMSO,H2O
+h,DMSO,DMSO ,H2O,DMSO,H2O,H2O,DMSO,DMSO ,H2O,DMSO,H2O,H2O
