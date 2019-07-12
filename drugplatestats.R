@@ -7,12 +7,18 @@ library(zoo)
 library(htmlTable)
 library(reshape2)
 
-GD<-read.csv("C:/Users/Sam/Downloads/2019-07-02_summarised-data (1).csv")
+##load data proccessed
+
+GD<-read.csv("2019-07-02_summarised-data (1).csv")
+
+## merge PD with Plate Map
 
 data <- add_plate(
   data = GD, 
-  file = "C:/Users/Sam/documents/PLATE MAP.csv",
+  file = "PLATE MAP.csv",
   well_ids_column = "well")
+
+##split dataframe based on plate 
 
 x<-split(data, data$plate, drop = F)
 
@@ -25,7 +31,11 @@ W.34.70<-x$S3L2
 WLP644<-x$S4L1
 
 
-MD<-read.csv("C:/Users/Sam/Downloads/2019-07-02_measures-data (2).csv")
+#load in raw data
+
+MD<-read.csv("2019-07-02_measures-data (2).csv")
+
+##split dataframe based on plate 
 xx<-split(MD, MD$plate, drop = F)
 
 
@@ -37,8 +47,8 @@ S6.113m<-xx$S3L1
 W.34.70m<-xx$S3L2
 WLP644m<-xx$S4L1
 
-i<-calc_AUC(chlamy2,"B08")
 
+## function to calculate area undercurve
 
 calc_AUC <- function(n,z){
   x <- n %>%
@@ -56,6 +66,8 @@ calc_AUC <- function(n,z){
   
   sum(diff(X)*rollmean(Y,2))
 }
+
+## function to calculate area undercurve of a plate and return it as a dataframe
 
 calc_AUC_plate <- function(BY4743m){
 
@@ -186,10 +198,12 @@ auc<-melt(AUC)
 names(auc) <- c("well", "auc")
 aucdata <- add_plate(
   data = auc, 
-  file = "C:/Users/Sam/documents/PLATE MAP.csv",
+  file = "PLATE MAP.csv",
   well_ids_column = "well")
 
 }
+
+## calc AUC by sample
 
 BYauc<-calc_AUC_plate(BY4743m)
 U5auc<-calc_AUC_plate(U5.05m)
@@ -199,14 +213,26 @@ S113auc<-calc_AUC_plate(S6.113m)
 W34auc<-calc_AUC_plate(W.34.70m)
 WLPauc<-calc_AUC_plate(WLP644m)
 
-BYstats<-merge(BYauc, BY4743)
-U5stats<-merge(U5auc, U5.05)
+## combine with processed data
+BYstats<-merge(BYauc, BY4743)%>%
+  mutate(DT = log(2)/mu/3600)
+U5stats<-merge(U5auc, U5.05)%>%
+  mutate(rel_fitness = auc/ BYstats$auc)
 S14stats<-merge(S14auc, S6.14)
 S45stats<-merge(S45auc, S6.45)
 S113stats<-merge(S113auc, S6.113)
 W34stats<-merge(W34auc, W.34.70)
 WLPstats<-merge(WLPauc, WLP644)
 
+divide<-function(n,z){n/z}
+
+divide(4,10)
+
+yyy <- aggregate(auc~control*solvent*plate, BYstats, FUN = mean)
+?aggregate
+BYaverage_stats <- merge(aggregate(list(AVE_auc=BYstats$auc, AVE_A=BYstats$A, AVE_mu=BYstats$mu, AVE_lambda=BYstats$lambda, AVE_DT=BYstats$DT, ave_rel=BYstats$), by = list(sample=BYstats$sample), mean), df)
+
+##output
 write.csv(BYstats, "BYstats.csv")
 write.csv(U5stats, "U5stats.csv")
 write.csv(S14stats, "S14stats.csv")
@@ -225,14 +251,14 @@ S113stats
 W34stats
 WLPstats
 
-library(data.table)
-BYaverage_stats <- aggregate(list(AVE_auc=BYstats$auc, AVE_A=BYstats$A, AVE_mu=BYstats$mu, AVE_lambda=BYstats$lambda), by = list(sample=BYstats$sample), mean)
-U5average_stats <- aggregate(list(AVE_auc=U5stats$auc, AVE_A=BYstats$A, AVE_mu=U5stats$mu, AVE_lambda=U5stats$lambda), by = list(sample=U5stats$sample), mean)
-S14average_stats <- aggregate(list(AVE_auc=S14stats$auc, AVE_A=S14stats$A, AVE_mu=S14stats$mu, AVE_lambda=S14stats$lambda), by = list(sample=S14stats$sample), mean)
-S45average_stats <- aggregate(list(AVE_auc=S45stats$auc, AVE_A=S45stats$A, AVE_mu=S45stats$mu, AVE_lambda=S45stats$lambda), by = list(sample=S45stats$sample), mean)
-S113average_stats <- aggregate(list(AVE_auc=S113stats$auc, AVE_A=S113stats$A, AVE_mu=S113stats$mu, AVE_lambda=S113stats$lambda), by = list(sample=S113stats$sample), mean)
-W34average_stats <- aggregate(list(AVE_auc=W34stats$auc, AVE_A=W34stats$A, AVE_mu=W34stats$mu, AVE_lambda=W34stats$lambda), by = list(sample=W34stats$sample), mean)
-WLPaverage_stats <- aggregate(list(AVE_auc=WLPstats$auc, AVE_A=WLPstats$A, AVE_mu=WLPstats$mu, AVE_lambda=WLPstats$lambda), by = list(sample=WLPstats$sample), mean)
+
+BYaverage_stats <- get_ave_stats(BYstats)
+U5average_stats <- get_ave_stats(U5stats)
+S14average_stats <- get_ave_stats(S14stats)
+S45average_stats <- get_ave_stats(S45stats)
+S113average_stats <- get_ave_stats(BYstats)
+W34average_stats <- get_ave_stats(W34stats)
+WLPaverage_stats <- get_ave_stats(WLPstats)
   
 write.csv(BYaverage_stats, "BYaverage_stats.csv")
 write.csv(U5average_stats, "U5average_stats.csv")
@@ -243,9 +269,13 @@ write.csv(W34stats, "W34average_stats")
 write.csv(WLPstats, "WLPaverage_stats")
 
 
+get_ave_stats <- function(BYstats){
+df <- subset(BYstats, select = -c(auc,A,lambda, mu, well))
+BYaverage_stats <- merge(aggregate(list(AVE_auc=BYstats$auc, AVE_A=BYstats$A, AVE_mu=BYstats$mu, AVE_lambda=BYstats$lambda, AVE_DT=BYstats$DT, ave_rel=BYstats$), by = list(sample=BYstats$sample), mean), df)%>%
+  distinct()}
+
+
  
-BYaverage_stats <- aggregate(list(AVE_auc=BYstats$auc, AVE_A=BYstats$A, AVE_mu=BYstats$mu, AVE_lambda=BYstats$lambda), by = list(sample=BYstats$sample), mean)BYaverage_stats <- aggregate(list(AVE_auc=BYstats$auc, AVE_A=BYstats$A, AVE_mu=BYstats$mu, AVE_lambda=BYstats$lambda), by = list(sample=BYstats$sample), mean)BYaverage_stats <- aggregate(list(AVE_auc=BYstats$auc, AVE_A=BYstats$A, AVE_mu=BYstats$mu, AVE_lambda=BYstats$lambda), by = list(sample=BYstats$sample), mean)BYaverage_stats <- aggregate(list(AVE_auc=BYstats$auc, AVE_A=BYstats$A, AVE_mu=BYstats$mu, AVE_lambda=BYstats$lambda), by = list(sample=BYstats$sample), mean)BYaverage_stats <- aggregate(list(AVE_auc=BYstats$auc, AVE_A=BYstats$A, AVE_mu=BYstats$mu, AVE_lambda=BYstats$lambda), by = list(sample=BYstats$sample), mean)BYaverage_stats <- aggregate(list(AVE_auc=BYstats$auc, AVE_A=BYstats$A, AVE_mu=BYstats$mu, AVE_lambda=BYstats$lambda), by = list(sample=BYstats$sample), mean)BYaverage_stats <- aggregate(list(AVE_auc=BYstats$auc, AVE_A=BYstats$A, AVE_mu=BYstats$mu, AVE_lambda=BYstats$lambda), by = list(sample=BYstats$sample), mean)BYaverage_stats <- aggregate(list(AVE_auc=BYstats$auc, AVE_A=BYstats$A, AVE_mu=BYstats$mu, AVE_lambda=BYstats$lambda), by = list(sample=BYstats$sample), mean)BYaverage_stats <- aggregate(list(AVE_auc=BYstats$auc, AVE_A=BYstats$A, AVE_mu=BYstats$mu, AVE_lambda=BYstats$lambda), by = list(sample=BYstats$sample), mean)BYaverage_stats <- aggregate(list(AVE_auc=BYstats$auc, AVE_A=BYstats$A, AVE_mu=BYstats$mu, AVE_lambda=BYstats$lambda), by = list(sample=BYstats$sample), mean)library(plyr)
- DD<-ddply(BYstats, c("sample", "auc"), summarize, outVal = mean(data))
  
 ?aggregate.data.frame
 strains<-c("S6.14","S6.45","S6.113","U5.05","W.34.70","WLP644","BY4743")
@@ -254,6 +284,11 @@ ave_A<-c(mean(S6.14$A),mean(S6.45$A),mean(S6.113$A),mean(U5.05$A),mean(W.34.70$A
 ave_lambda<-c(mean(S6.14$lambda),mean(S6.45$lambda),mean(S6.113$lambda),mean(U5.05$lambda),mean(W.34.70$lambda),mean(WLP644$lambda),mean(BY4743$lambda),mean(chlamy$lambda),mean(GLU$lambda))
 ave_AUC<-c(mean(S6.14$auc),mean(S6.45$auc),mean(S6.113$auc),mean(U5.05$auc),mean(W.34.70$auc),mean(WLP644$auc),mean(BY4743$auc),mean(chlamy$auc),mean(GLU$auc))
 summ<-data.frame(strains,ave_A,ave_mu,ave_lambda, ave_AUC)
+
+cccc <- ifelse("H2O" = (BYstats$sample.2) & 
+                        (BYstats$sample.2) = "H2O C")
+
+
 
 summ<-summ%>%
   mutate(ave_DT = log(2)/summ$ave_mu/3600, rel_fitness = ave_AUC/102021.65)

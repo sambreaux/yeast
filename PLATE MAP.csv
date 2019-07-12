@@ -8,12 +8,22 @@ f,Fluconazole,Cinnamic acid,CCCP,methylmethane sulfonate,Hygromycin B,Thiourea,F
 g,Propiconazole,Sodium metasilicate,Dequalinium Chloride,Hydroxyurea,Cycloheximide,4-Aminopyridine,Propiconazole,Sodium metasilicate,Dequalinium Chloride,Hydroxyurea,Cycloheximide,4-Aminopyridine
 h,Miconazole Nitrate,Guanidine hydrochloride,2-Deoxy-D-glucose,5-Fluorouracil,Copper(II) sulfate,Benzamidine,Miconazole Nitrate,Guanidine hydrochloride,2-Deoxy-D-glucose,5-Fluorouracil,Copper(II) sulfate,Benzamidine
 ,,,,,,,,,,,,
-sample,1,2,3,4,5,6,7,8,9,10,11,12
-a,H2O C,H2O, H2O,H2O,H2O,H2O,H2O C,H2O, H2O,H2O,H2O,H2O
-b,DMSO C,H2O,DMSO,H2O,DMSO,H2O,DMSO C,H2O,DMSO,H2O,DMSO,H2O
-c,ETOH C,H2O,H2O,H2O,H2O,H2O,ETOH C,H2O,H2O,H2O,H2O,H2O
+solvent,1,2,3,4,5,6,7,8,9,10,11,12
+a,H2O,H2O, H2O,H2O,H2O,H2O,H2O C,H2O, H2O,H2O,H2O,H2O
+b,DMSO,H2O,DMSO,H2O,DMSO,H2O,DMSO C,H2O,DMSO,H2O,DMSO,H2O
+c,ETOH,H2O,H2O,H2O,H2O,H2O,ETOH C,H2O,H2O,H2O,H2O,H2O
 d,DMSO,DMSO,ETOH,H2O,H2O,H2O,DMSO,DMSO,ETOH,H2O,H2O,H2O
 e,ETOH,DMSO,H2O,H2O,H2O,H2O,ETOH,DMSO,H2O,H2O,H2O,H2O
 f,DMSO,DMSO,DMSO ,H2O,H2O,H2O,DMSO,DMSO,DMSO ,H2O,H2O,H2O
 g,ETOH,H2O,H2O,H2O,DMSO,H2O,ETOH,H2O,H2O,H2O,DMSO,H2O
 h,DMSO,DMSO ,H2O,DMSO,H2O,H2O,DMSO,DMSO ,H2O,DMSO,H2O,H2O
+,,,,,,,,,,,,
+control,1,2,3,4,5,6,7,8,9,10,11,12
+a,H2O,case,case,case,case,case,case,case,case,case,case,case
+b,DMSO,case,case,case,case,case,case,case,case,case,case,case
+c,ETOH,case,case,case,case,case,case,case,case,case,case,case
+d,case,case,case,case,case,case,case,case,case,case,case,case
+e,case,case,case,case,case,case,case,case,case,case,case,case
+f,case,case,case,case,case,case,case,case,case,case,case,case
+g,case,case,case,case,case,case,case,case,case,case,case,case
+h,case,case,case,case,case,case,case,case,case,case,case,case
