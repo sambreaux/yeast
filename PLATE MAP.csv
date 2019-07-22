@@ -9,19 +9,29 @@ g,Propiconazole,Sodium metasilicate,Dequalinium Chloride,Hydroxyurea,Cycloheximi
 h,Miconazole Nitrate,Guanidine hydrochloride,2-Deoxy-D-glucose,5-Fluorouracil,Copper(II) sulfate,Benzamidine,Miconazole Nitrate,Guanidine hydrochloride,2-Deoxy-D-glucose,5-Fluorouracil,Copper(II) sulfate,Benzamidine
 ,,,,,,,,,,,,
 solvent,1,2,3,4,5,6,7,8,9,10,11,12
-a,H2O,H2O, H2O,H2O,H2O,H2O,H2O C,H2O, H2O,H2O,H2O,H2O
-b,DMSO,H2O,DMSO,H2O,DMSO,H2O,DMSO C,H2O,DMSO,H2O,DMSO,H2O
-c,ETOH,H2O,H2O,H2O,H2O,H2O,ETOH C,H2O,H2O,H2O,H2O,H2O
-d,DMSO,DMSO,ETOH,H2O,H2O,H2O,DMSO,DMSO,ETOH,H2O,H2O,H2O
-e,ETOH,DMSO,H2O,H2O,H2O,H2O,ETOH,DMSO,H2O,H2O,H2O,H2O
-f,DMSO,DMSO,DMSO ,H2O,H2O,H2O,DMSO,DMSO,DMSO ,H2O,H2O,H2O
-g,ETOH,H2O,H2O,H2O,DMSO,H2O,ETOH,H2O,H2O,H2O,DMSO,H2O
-h,DMSO,DMSO ,H2O,DMSO,H2O,H2O,DMSO,DMSO ,H2O,DMSO,H2O,H2O
+a,H2O,H2O,H2O,H2O,H2O,H2O,H2O-2,H2O-2,H2O-2,H2O-2,H2O-2,H2O-2
+b,DMSO,H2O,DMSO,H2O,DMSO,H2O,DMSO-2,H2O-2,DMSO-2,H2O-2,DMSO-2,H2O-2
+c,ETOH,H2O,H2O,H2O,H2O,H2O,ETOH-2,H2O-2,H2O-2,H2O-2,H2O-2,H2O-2
+d,DMSO,DMSO,ETOH,H2O,H2O,H2O,DMSO-2,DMSO-2,ETOH-2,H2O-2,H2O-2,H2O-2
+e,ETOH,DMSO,H2O,H2O,H2O,H2O,ETOH-2,DMSO-2,H2O-2,H2O-2,H2O-2,H2O-2
+f,DMSO,DMSO,DMSO,H2O,H2O,H2O,DMSO-2,DMSO-2,DMSO-2,H2O-2,H2O-2,H2O-2
+g,ETOH,H2O,H2O,H2O,DMSO,H2O,ETOH-2,H2O-2,H2O-2,H2O-2,DMSO-2,H2O-2
+h,DMSO,DMSO,H2O,DMSO,H2O,H2O,DMSO-2,DMSO-2,H2O-2,DMSO-2,H2O-2,H2O-2
 ,,,,,,,,,,,,
 control,1,2,3,4,5,6,7,8,9,10,11,12
-a,H2O,case,case,case,case,case,case,case,case,case,case,case
-b,DMSO,case,case,case,case,case,case,case,case,case,case,case
-c,ETOH,case,case,case,case,case,case,case,case,case,case,case
+a,H2O,case,case,case,case,case,H2O-2,case-2,case-2,case-2,case-2,case-2
+b,DMSO,case,case,case,case,case,DMSO-2,case-2,case-2,case-2,case-2,case-2
+c,ETOH,case,case,case,case,case,ETOH-2,case-2,case-2,case-2,case-2,case-2
+d,case,case,case,case,case,case,case-2,case-2,case-2,case-2,case-2,case-2
+e,case,case,case,case,case,case,case-2,case-2,case-2,case-2,case-2,case-2
+f,case,case,case,case,case,case,case-2,case-2,case-2,case-2,case-2,case-2
+g,case,case,case,case,case,case,case-2,case-2,case-2,case-2,case-2,case-2
+h,case,case,case,case,case,case,case-2,case-2,case-2,case-2,case-2,case-2
+,,,,,,,,,,,,
+control2,1,2,3,4,5,6,7,8,9,10,11,12
+a,H2O,case,case,case,case,case,H2O,case,case,case,case,case
+b,DMSO,case,case,case,case,case,DMSO,case,case,case,case,case
+c,ETOH,case,case,case,case,case,ETOH,case,case,case,case,case
 d,case,case,case,case,case,case,case,case,case,case,case,case
 e,case,case,case,case,case,case,case,case,case,case,case,case
 f,case,case,case,case,case,case,case,case,case,case,case,case
