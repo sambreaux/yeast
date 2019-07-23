@@ -181,7 +181,7 @@ G12<- calc_AUC(BY4743m,"G12")
 H12<- calc_AUC(BY4743m,"H12")
 
 
-AUC<-tibble(A01,	B01,	C01,	D01,	E01,	F01,	G01,	H01, 
+  A01,	B01,	C01,	D01,	E01,	F01,	G01,	H01, 
             A02,	B02,	C02,	D02,	E02,	F02,	G02,	H02,
             A03,	B03,	C03,	D03,	E03,	F03,	G03,	H03,
             A04,	B04,	C04,	D04,	E04,	F04,	G04,	H04,
@@ -235,9 +235,6 @@ divide<-function(n,z){n/z}
 
 divide(4,10)
 
-yyy <- aggregate(auc~control*solvent*plate, BYstats, FUN = mean)
-?aggregate
-BYaverage_stats <- merge(aggregate(list(AVE_auc=BYstats$auc, AVE_A=BYstats$A, AVE_mu=BYstats$mu, AVE_lambda=BYstats$lambda, AVE_DT=BYstats$DT, ave_rel=BYstats$), by = list(sample=BYstats$sample), mean), df)
 
 ##output
 write.csv(BYstats, "BYstats.csv")
@@ -280,7 +277,7 @@ write.csv(WLPstats, "WLPaverage_stats")
  
 xtt<-split(BYstats, BYstats$solvent) 
 
-dmso<-xxt$DMSO %>%
+dmso<-xtt$DMSO %>%
   remove_rownames() %>%
   column_to_rownames("sample")
 
@@ -300,7 +297,50 @@ H2O<-H2O%>%
   rownames_to_column("sample") %>%
   mutate(rel_fitness = auc/H2Ocon)
 
+ETOH<-xtt$ETOH %>%
+  remove_rownames() %>%
+  column_to_rownames("sample")
 
+etohcon <-ETOH["ETOH control", "auc"]
+
+ETOH<-ETOH%>%
+  rownames_to_column("sample") %>%
+  mutate(rel_fitness = auc/etohcon)
+
+dmso2<-xtt$`DMSO-2` %>%
+  remove_rownames() %>%
+  column_to_rownames("sample")
+
+dmsocon2 <-dmso2["DMSO control", "auc"]
+
+dmso2<-dmso2%>%
+  rownames_to_column("sample") %>%
+  mutate(rel_fitness = auc/dmsocon2)
+
+H2O2<-xtt$`H2O-2` %>%
+  remove_rownames() %>%
+  column_to_rownames("sample")
+
+H2Ocon2 <-H2O2["H2O control", "auc"]
+
+H2O2<-H2O2%>%
+  rownames_to_column("sample") %>%
+  mutate(rel_fitness = auc/H2Ocon2)
+
+ETOH2<-xtt$`ETOH-2` %>%
+  remove_rownames() %>%
+  column_to_rownames("sample")
+
+etohcon2 <-ETOH2["ETOH control", "auc"]
+
+ETOH2<-ETOH2%>%
+  rownames_to_column("sample") %>%
+  mutate(rel_fitness = auc/etohcon2)
+
+BYstats<-rbind(dmso,H2O,ETOH,dmso2,H2O2,ETOH2)
+
+
+?rbind()
 
 view(xt$DMSO)
 
