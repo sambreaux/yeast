@@ -203,6 +203,13 @@ aucdata <- add_plate(
 
 }
 
+## averge stat per compound
+get_ave_stats <- function(BYstats) {
+  df <- subset(BYstats, select = -c(auc,A,lambda, mu, well,control, DT))
+  BYaverage_stats <- merge(aggregate(list(AVE_auc=BYstats$auc, AVE_A=BYstats$A, AVE_mu=BYstats$mu, AVE_lambda=BYstats$lambda, AVE_DT=BYstats$DT), by = list(sample=BYstats$sample), mean), df)%>%
+    distinct()
+}
+
 ## calc AUC by sample
 
 BYauc<-calc_AUC_plate(BY4743m)
@@ -269,14 +276,35 @@ write.csv(W34stats, "W34average_stats")
 write.csv(WLPstats, "WLPaverage_stats")
 
 
-get_ave_stats <- function(BYstats){
-df <- subset(BYstats, select = -c(auc,A,lambda, mu, well))
-BYaverage_stats <- merge(aggregate(list(AVE_auc=BYstats$auc, AVE_A=BYstats$A, AVE_mu=BYstats$mu, AVE_lambda=BYstats$lambda, AVE_DT=BYstats$DT, ave_rel=BYstats$), by = list(sample=BYstats$sample), mean), df)%>%
-  distinct()}
-
 
  
- 
+xtt<-split(BYstats, BYstats$solvent) 
+
+dmso<-xxt$DMSO %>%
+  remove_rownames() %>%
+  column_to_rownames("sample")
+
+dmsocon <-dmso["DMSO control", "auc"]
+
+dmso<-dmso%>%
+  rownames_to_column("sample") %>%
+  mutate(rel_fitness = auc/dmsocon)
+
+H2O<-xtt$H2O %>%
+  remove_rownames() %>%
+  column_to_rownames("sample")
+
+H2Ocon <-H2O["H2O control", "auc"]
+
+H2O<-H2O%>%
+  rownames_to_column("sample") %>%
+  mutate(rel_fitness = auc/H2Ocon)
+
+
+
+view(xt$DMSO)
+
+names(BYstats)
 ?aggregate.data.frame
 strains<-c("S6.14","S6.45","S6.113","U5.05","W.34.70","WLP644","BY4743")
 ave_mu<-signif(c(mean(S6.14$mu),mean(S6.45$mu),mean(S6.113$mu),mean(U5.05$mu),mean(W.34.70$mu),mean(WLP644$mu),mean(BY4743$mu),mean(chlamy$mu),mean(GLU$mu)), digits = 2)
@@ -285,8 +313,6 @@ ave_lambda<-c(mean(S6.14$lambda),mean(S6.45$lambda),mean(S6.113$lambda),mean(U5.
 ave_AUC<-c(mean(S6.14$auc),mean(S6.45$auc),mean(S6.113$auc),mean(U5.05$auc),mean(W.34.70$auc),mean(WLP644$auc),mean(BY4743$auc),mean(chlamy$auc),mean(GLU$auc))
 summ<-data.frame(strains,ave_A,ave_mu,ave_lambda, ave_AUC)
 
-cccc <- ifelse("H2O" = (BYstats$sample.2) & 
-                        (BYstats$sample.2) = "H2O C")
 
 
 
