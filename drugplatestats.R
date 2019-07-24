@@ -285,16 +285,19 @@ relfit_DT<- function(BYstats){
 
 ## average stat per compound
 get_ave_stats <- function(BYstats) {
-  df <- subset(BYstats, select = -c(auc,A,lambda, mu, well,control, DT, rel_fitness,solvent, rel_max_GR))
-  BYaverage_stats <- merge(aggregate(list(AVE_auc=BYstats$auc, AVE_A=BYstats$A, AVE_mu=BYstats$mu, AVE_lambda=BYstats$lambda, AVE_DT=BYstats$DT, AVE_rel_fit = BYstats$rel_fitness, AVE_rel_max_GR = BYstats$rel_max_GR), by = list(sample=BYstats$sample), mean), df)%>%
+  df <- subset(BYstats, select = -c(auc,A,lambda, mu, well,control, DT, rel_fitness,solvent, rel_max_GR, con_rel_auc, con_rel_mu ,BYmu, BYauc, BYrel_mu, BYrel_auc))
+  BYaverage_stats <- merge(aggregate(list(AVE_auc=BYstats$auc, AVE_A=BYstats$A, AVE_mu=BYstats$mu, AVE_lambda=BYstats$lambda, AVE_DT=BYstats$DT, AVE_rel_fit = BYstats$rel_fitness, AVE_rel_max_GR = BYstats$rel_max_GR, AVE_con_rel_auc = BYstats$con_rel_auc, AVE_con_rel_mu= BYstats$con_rel_mu ,AVE_BYmu = BYstats$BYmu, AVE_BYauc = BYstats$BYauc, AVE_BYrel_mu= BYstats$BYrel_mu, AVE_BYrel_auc= BYstats$BYrel_auc), 
+                                     by = list(sample=BYstats$sample), mean), df)%>%
     distinct()
 }
+
+names(BYstats)
 
 ##plot plate
 
 plot_plate_fitness<-function(BY4743m, BYstats){
   VVV<-BY4743m%>%
-    select(-c(sample.2))%>%
+    
     merge(BYstats)
   
   
@@ -311,10 +314,13 @@ plot_plate_fitness<-function(BY4743m, BYstats){
     guides(fill = FALSE)
 }
 
+
+
+
 #plot sample average 
 
-plot_ave_fitness<-function(b){
-  b %>% 
+plot_ave_fitness<-function(BYaverage_stats,BY4743m){
+  well_data(BYaverage_stats,BY4743m) %>% 
     mutate(plate = 1) %>% 
     mtp_ggplot(aes(plate = plate, well = well)) + 
     mtp_spec_96well(w=127.76*5, h=85.48*5) + 
@@ -327,9 +333,7 @@ plot_ave_fitness<-function(b){
     guides(fill = FALSE)
 }
 
-ctt<-split(BYstats, BYstats$control)
-hq<-ctt$`1`%>%
-  select(sample, well)
+
 
 well_data<-function(BYaverage_stats,BY4743m){b<-merge(BYaverage_stats,hq)%>%
   merge(BY4743m)
@@ -360,6 +364,35 @@ W34stats<-merge(W34auc, W.34.70)%>%
   relfit_DT()
 WLPstats<-merge(WLPauc, WLP644)%>%
   relfit_DT()
+
+BY4743stats<-BYstats%>%
+  select(c(well,auc,mu))
+colnames(BY4743stats) <- c("well", "BYauc","BYmu")
+
+BYstats[,"BYauc"] <- NA
+BYstats[,"BYmu"] <- NA
+BYstats[,"BYrel_auc"] <- NA
+BYstats[,"BYrel_mu"] <- NA
+
+BYstats <-BYstats%>%
+  mutate(con_rel_auc = auc/102021.65, con_rel_mu = mu/6.0e-05)
+U5stats <-merge(BY4743stats, U5stats)%>%
+  mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/71112.73, con_rel_mu = mu/3.2e-05)
+S14stats<-merge(BY4743stats, S14stats)%>%
+  mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/104062.91, con_rel_mu = mu/3.8e-05)
+S45stats<-merge(BY4743stats, U5stats)%>%
+  mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/104530.84, con_rel_mu = mu/4.5e-05)
+S113stats<-merge(BY4743stats, U5stats)%>%
+  mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/107479.96, con_rel_mu = mu/3.1e-05)
+W34stats<-merge(BY4743stats, U5stats)%>%
+  mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/76260.33, con_rel_mu = mu/1.9e-05)
+WLPstats<-merge(BY4743stats, U5stats)%>%
+  mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/108883.04, con_rel_mu = mu/6.6e-05)
+
+
+ctt<-split(BYstats, BYstats$control)
+hq<-ctt$`1`%>%
+  select(sample, well)
 
 BYaverage_stats <- get_ave_stats(BYstats)
 U5average_stats <- get_ave_stats(U5stats)
@@ -397,30 +430,13 @@ write.csv(S113stats, "S113stats.csv")
 write.csv(W34stats, "W34average_stats")
 write.csv(WLPstats, "WLPaverage_stats")
 
-BY4743stats<-BYstats%>%
-  select(c(well,auc,mu))
-colnames(BY4743stats) <- c("well", "BYauc","BYmu")
 
 
-BYstats <-BYstats%>%
-  mutate(con_rel_auc = auc/102021.65, con_rel_mu = mu/6.0e-05)
-U5stats <-merge(BY4743stats, U5stats)%>%
-  mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/71112.73, con_rel_mu = mu/3.2e-05)
-S14stats<-merge(BY4743stats, S14stats)%>%
-  mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/104062.91, con_rel_mu = mu/3.8e-05)
-S45stats<-merge(BY4743stats, U5stats)%>%
-  mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/104530.84, con_rel_mu = mu/4.5e-05)
-S113stats<-merge(BY4743stats, U5stats)%>%
-  mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/107479.96, con_rel_mu = mu/3.1e-05)
-W34stats<-merge(BY4743stats, U5stats)%>%
-  mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/76260.33, con_rel_mu = mu/1.9e-05)
-WLPstats<-merge(BY4743stats, U5stats)%>%
-  mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/108883.04, con_rel_mu = mu/6.6e-05)
 
 
 plot_plate_mu<-function(BY4743m, BYstats){
   VVV<-BY4743m%>%
-    select(-c(sample.2))%>%
+    
     merge(BYstats)
   
   
@@ -439,7 +455,7 @@ plot_plate_mu<-function(BY4743m, BYstats){
 
 plot_plate_BYauc<-function(x, z){
   VVV<-x%>%
-    select(-c(sample.2))%>%
+    
     merge(z)
   
   
@@ -450,7 +466,7 @@ plot_plate_BYauc<-function(x, z){
     geom_footprint() + 
     geom_col_label() + 
     geom_row_label() + 
-    geom_well_rect(aes ( fill = control, alpha = BYauc)) +
+    geom_well_rect(aes ( fill = control, alpha = BYrel_auc)) +
     geom_well_line(aes(x = runtime, y = measure)) + 
     geom_well_text(aes(label =str_wrap( sample,w = 10)),  colour="black") + 
     guides(fill = FALSE)
@@ -458,7 +474,7 @@ plot_plate_BYauc<-function(x, z){
 
 plot_plate_BYmu<-function(x, z){
   VVV<-x%>%
-    select(-c(sample.2))%>%
+    
     merge(z)
   
   
@@ -469,7 +485,7 @@ plot_plate_BYmu<-function(x, z){
     geom_footprint() + 
     geom_col_label() + 
     geom_row_label() + 
-    geom_well_rect(aes ( fill = control, alpha = BYmu)) +
+    geom_well_rect(aes ( fill = control, alpha = BYrel_mu)) +
     geom_well_line(aes(x = runtime, y = measure)) + 
     geom_well_text(aes(label =str_wrap( sample,w = 10)),  colour="black") + 
     guides(fill = FALSE)
@@ -477,7 +493,7 @@ plot_plate_BYmu<-function(x, z){
 
 plot_plate_conauc<-function(BY4743m, BYstats){
   VVV<-BY4743m%>%
-    select(-c(sample.2))%>%
+    
     merge(BYstats)
   
   
@@ -496,7 +512,7 @@ plot_plate_conauc<-function(BY4743m, BYstats){
 
 plot_plate_conmu<-function(BY4743m, BYstats){
   VVV<-BY4743m%>%
-    select(-c(sample.2))%>%
+    
     merge(BYstats)
   
   
@@ -514,11 +530,104 @@ plot_plate_conmu<-function(BY4743m, BYstats){
 }
 
 
-audit::run()
+AVE_plot_plate_mu<-function(BYaverage_stats,BY4743m){
+  well_data(BYaverage_stats,BY4743m) %>% 
+    mutate(plate = 1) %>% 
+    mtp_ggplot(aes(plate = plate, well = well)) + 
+    mtp_spec_96well(w=127.76*5, h=85.48*5) + 
+    geom_footprint() + 
+    geom_col_label() + 
+    geom_row_label() + 
+    geom_well_rect(aes ( fill = plate, alpha = AVE_rel_max_GR)) +
+    geom_well_line(aes(x = runtime, y = measure)) + 
+    geom_well_text(aes(label =str_wrap( sample,w = 10)),  colour="black") + 
+    guides(fill = FALSE)
+}
 
-names(BYstats)
-names(U5stats)
-BYstats[ , "BYmu"] <- NA
-BYstats[ , "BYauc"] <- NA
-BYstats[ , "BYrel_mu"] <- NA
-BYstats[ , "BYrel_auc"] <- NA
+AVE_plot_plate_BYauc<-function(BYaverage_stats,BY4743m){
+  well_data(BYaverage_stats,BY4743m) %>% 
+    mutate(plate = 1) %>% 
+    mtp_ggplot(aes(plate = plate, well = well)) + 
+    mtp_spec_96well(w=127.76*5, h=85.48*5) + 
+    geom_footprint() + 
+    geom_col_label() + 
+    geom_row_label() + 
+    geom_well_rect(aes ( fill = plate, alpha = AVE_BYrel_auc)) +
+    geom_well_line(aes(x = runtime, y = measure)) + 
+    geom_well_text(aes(label =str_wrap( sample,w = 10)),  colour="black") + 
+    guides(fill = FALSE)
+}
+
+AVE_plot_plate_BYmu<-function(BYaverage_stats,BY4743m){
+  well_data(BYaverage_stats,BY4743m) %>% 
+    mutate(plate = 1) %>% 
+    mtp_ggplot(aes(plate = plate, well = well)) + 
+    mtp_spec_96well(w=127.76*5, h=85.48*5) + 
+    geom_footprint() + 
+    geom_col_label() + 
+    geom_row_label() + 
+    geom_well_rect(aes ( fill = plate, alpha = AVE_BYrel_mu)) +
+    geom_well_line(aes(x = runtime, y = measure)) + 
+    geom_well_text(aes(label =str_wrap( sample,w = 10)),  colour="black") + 
+    guides(fill = FALSE)
+}
+
+AVE_plot_plate_conauc<-function(BYaverage_stats,BY4743m){
+  well_data(BYaverage_stats,BY4743m) %>% 
+    mutate(plate = 1) %>% 
+    mtp_ggplot(aes(plate = plate, well = well)) + 
+    mtp_spec_96well(w=127.76*5, h=85.48*5) + 
+    geom_footprint() + 
+    geom_col_label() + 
+    geom_row_label() + 
+    geom_well_rect(aes ( fill = plate, alpha = AVE_con_rel_auc)) +
+    geom_well_line(aes(x = runtime, y = measure)) + 
+    geom_well_text(aes(label =str_wrap( sample,w = 10)),  colour="black") + 
+    guides(fill = FALSE)
+}
+
+AVE_plot_plate_conmu<-function(BYaverage_stats,BY4743m){
+  well_data(BYaverage_stats,BY4743m) %>% 
+    mutate(plate = 1) %>%
+    mtp_ggplot(aes(plate = plate, well = well)) + 
+    mtp_spec_96well(w=127.76*5, h=85.48*5) + 
+    geom_footprint() + 
+    geom_col_label() + 
+    geom_row_label() + 
+    geom_well_rect(aes ( fill = plate, alpha = AVE_con_rel_mu)) +
+    geom_well_line(aes(x = runtime, y = measure)) + 
+    geom_well_text(aes(label =str_wrap( sample,w = 10)),  colour="black") + 
+    guides(fill = FALSE)
+}
+
+
+
+plot_plate_fitness(U5.05m, U5stats)
+plot_plate_mu(U5stats,U5.05m)
+plot_plate_BYauc(U5stats,U5.05m)
+plot_plate_BYmu(U5stats,U5.05m)
+plot_plate_conauc(U5stats,U5.05m)
+plot_plate_conmu(U5stats,U5.05m)
+
+plot_ave_fitness(U5average_stats, U5.05m)
+AVE_plot_plate_mu(U5average_stats, U5.05m)
+AVE_plot_plate_BYauc(U5average_stats, U5.05m)
+AVE_plot_plate_BYmu(U5average_stats, U5.05m)
+AVE_plot_plate_conauc(U5average_stats, U5.05m)
+AVE_plot_plate_conmu(U5average_stats, U5.05m)
+
+
+BY4743m
+U5.05m, U5stats
+S6.14m, S14stats
+S6.45m, S45stats
+S6.113m, S113stats
+W.34.70m, W34stats
+WLP644m, WLPstats
+
+U5average_stats, U5.05m
+S14average_stats, S6.14m
+S45average_stats, S6.45m
+S113average_stats, S6.113m
+W34average_stats, W.34.70m
+WLPaverage_stats, WLP644m
