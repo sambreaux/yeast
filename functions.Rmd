@@ -1,3 +1,15 @@
+---
+title: "drug  plate"
+author: "Sam"
+date: "August 20, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{setup}
 getwd()
 library(tidyverse)
 library(plater)
@@ -9,8 +21,13 @@ library(reshape2)
 library(mtpview1)
 library(stringr)
 library(scales)
+```
 
-##load data proccessed
+load proccessed data
+- merege with plate meta data
+
+load meassure data
+```{load data}
 
 GD<-read.csv("2019-07-02_summarised-data (1).csv")
 
@@ -21,7 +38,17 @@ data <- add_plate(
   file = "PLATE MAP.csv",
   well_ids_column = "well")
 
+
+#load in raw data
+
+MD<-read.csv("2019-07-02_measures-data (2).csv")
+```
+
+split list into dataframe based on strain 
+```{splitdatatframe}
+
 ##split dataframe based on plate 
+
 
 x<-split(data, data$plate, drop = F)
 
@@ -34,11 +61,6 @@ W.34.70<-x$S3L2
 WLP644<-x$S4L1
 
 
-#load in raw data
-
-MD<-read.csv("2019-07-02_measures-data (2).csv")
-
-##split dataframe based on plate 
 xx<-split(MD, MD$plate, drop = F)
 
 
@@ -50,7 +72,10 @@ S6.113m<-xx$S3L1
 W.34.70m<-xx$S3L2
 WLP644m<-xx$S4L1
 
+```
 
+Function: calculate Area Under the Curve -- add as new column 
+```{AUC}
 ## function to calculate area undercurve
 
 calc_AUC <- function(n,z){
@@ -206,6 +231,10 @@ aucdata <- add_plate(
 
 }
 
+```
+
+FUNCTION: calculate relative fitness and doubling time -- add as new columns
+```{relfit}
 
 ## calculate relative fitness and doubling time
 relfit_DT<- function(BYstats){
@@ -282,7 +311,11 @@ relfit_DT<- function(BYstats){
     mutate(DT = log(2)/mu/3600)
 }
 
+```
 
+
+FUNCTION: calculate average ofeach metric for each compound
+```{averagestats}
 ## average stat per compound
 get_ave_stats <- function(BYstats) {
   df <- subset(BYstats, select = -c(auc,A,lambda, mu, well,control, DT, rel_fitness,solvent, rel_max_GR, con_rel_auc, con_rel_mu ,BYmu, BYauc, BYrel_mu, BYrel_auc))
@@ -290,7 +323,18 @@ get_ave_stats <- function(BYstats) {
                                      by = list(sample=BYstats$sample), mean), df)%>%
     distinct()
 }
+```
 
+FUNCTION: add compound-well data to average stats data and merge stats with OD measurment data
+```{welldat}
+well_data<-function(BYaverage_stats,BY4743m){b<-merge(BYaverage_stats,hq)%>%
+  merge(BY4743m)
+}
+```
+
+
+FUNCTION: plot relative fitness (from plate controls) by plate and by compound average 
+```{relative fitness }
 
 ##plot plate
 
@@ -333,10 +377,7 @@ plot_ave_fitness<-function(BYaverage_stats,BY4743m){
 }
 
 
-
-well_data<-function(BYaverage_stats,BY4743m){b<-merge(BYaverage_stats,hq)%>%
-  merge(BY4743m)
-}
+```
 
 ## calc AUC by sample
 
@@ -373,6 +414,9 @@ BYstats[,"BYmu"] <- NA
 BYstats[,"BYrel_auc"] <- NA
 BYstats[,"BYrel_mu"] <- NA
 
+calculate relative fitness(auc) and relative average growth for each plate based on off plate controls 
+have to edit this later for addition of DMSO and ETOh controls (currently only water)
+```{off plate controls}
 BYstats <-BYstats%>%
   mutate(con_rel_auc = auc/102021.65, con_rel_mu = mu/6.0e-05)
 U5stats <-merge(BY4743stats, U5stats)%>%
@@ -387,7 +431,7 @@ W34stats<-merge(BY4743stats, U5stats)%>%
   mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/76260.33, con_rel_mu = mu/1.9e-05)
 WLPstats<-merge(BY4743stats, U5stats)%>%
   mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/108883.04, con_rel_mu = mu/6.6e-05)
-
+```
 
 ctt<-split(BYstats, BYstats$control)
 hq<-ctt$`1`%>%
@@ -435,7 +479,6 @@ write.csv(WLPstats, "WLPaverage_stats")
 
 plot_plate_mu<-function(BY4743m, BYstats){
   VVV<-BY4743m%>%
-    
     merge(BYstats)
   
   
