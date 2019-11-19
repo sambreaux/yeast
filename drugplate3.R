@@ -9,21 +9,35 @@ library(reshape2)
 library(mtpview1)
 library(stringr)
 library(scales)
-?mtpview1
+library(cowplot)
+??mtpview1
 ##load data proccessed
 
-GD<-read.csv("drug_run3_sum_dat.csv")
+sum_dat<-read.csv("drug_run3_sum_dat.csv")
+
+Meas_dat<-read.csv("drug_run3_meas-dat.csv")
+
+##split dataframe based on plate 
+xx<-split(Meas_dat, MD$plate, drop = F)
 
 ## merge PD with Plate Map
 
-data <- add_plate(
-  data = GD, 
+data_sum <- add_plate(
+  data = sum_dat, 
   file = "PLATE MAP.csv",
   well_ids_column = "well")
 
+data_meas <- add_plate(
+  data = Meas_dat, 
+  file = "PLATE MAP.csv",
+  well_ids_column = "well")
+
+
+###compare to off plate controls, on plate controls, by4743 (control strain)
+
 ##split dataframe based on plate 
 
-x<-split(data, data$plate, drop = F)
+x<-split(data_sum, data_sum$plate, drop = F)
 
 S6.14<-x$S1L1
 S6.45<-x$S1L2
@@ -38,18 +52,275 @@ W.34.70<-x$S3L2
 MD<-read.csv("drug_run3_meas-dat.csv")
 
 ##split dataframe based on plate 
-xx<-split(MD, MD$plate, drop = F)
+xx<-split(data_meas, data_meas$plate, drop = F)
 
 
 
-S6.14<-xx$S1L1
-S6.45<-xx$S1L2
-s6.113<-xx$S2L1
-u5.05<-xx$S2L2
-wlp.644<-xx$S3L1
-W.34.70<-xx$S3L2
+S6.14m<-xx$S1L1%>%
+  arrange(runtime)
+S6.45m<-xx$S1L2%>%
+  arrange(runtime)
+s6.113m<-xx$S2L1%>%
+  arrange(runtime)
+u5.05m<-xx$S2L2%>%
+  arrange(runtime)
+wlp.644m<-xx$S3L1%>%
+  arrange(runtime)
+W.34.70m<-xx$S3L2%>%
+  arrange(runtime)
 
 
+
+U5auc<-calc_AUC_plate(u5.05m)
+S14auc<-calc_AUC_plate(S6.14m)
+S45auc<-calc_AUC_plate(S6.45m)
+S113auc<-calc_AUC_plate(s6.113m)
+W34auc<-calc_AUC_plate(W.34.70m)
+w34_rels<-off_plate_rel_fit(lll, W34auc, "W-34/70")%>%
+  on_plate_rel_fit()
+
+WLPauc<-calc_AUC_plate(wlp.644m)
+
+sample_aucs<-rbind(U5auc,S14auc,S45auc,S113auc,W34auc,WLPauc)
+
+W34auc$solvent<-(gsub("DMSO-2", "DMSO", W34auc$solvent))
+W.34.70$solvent<-(gsub("DMSO-2", "DMSO", W.34.70$solvent))
+is.data.frame(W34auc)
+is.data.frame(W.34.70)
+is.data.frame(W34stats)
+
+
+xtx<-as.data.frame(W34stats)
+iii<-relfit_DT(xtx)
+## combine with processed data
+
+U5stats<-merge(U5auc, u5.05)%>%
+  relfit_DT()
+S14stats<-merge(S14auc, S6.14)%>%
+  relfit_DT()
+S45stats<-merge(S45auc, S6.45)%>%
+  relfit_DT()
+S113stats<-merge(S113auc, s6.113)%>%
+  relfit_DT()
+W34stats<-merge(W34auc, W.34.70)%>%
+  relfit_DT_no_DMSO2()
+WLPstats<-merge(WLPauc, wlp.644)%>%
+  relfit_DT()
+
+
+U5_plat_rel<-U5stats%>% 
+  group_by(solvent) %>% 
+  bind_rows(., .) %>%
+  mutate(rel_fit_off_plate = ifelse(test = (solvent == 'ETOH'), 
+                          yes = auc/42626.6644,
+                          no = ifelse(test = (solvent == 'ETOH-2'), 
+                                      yes = auc/42626.6644,
+                                      no = ifelse(test = (solvent == 'DMSO'),
+                                                  yes = auc/39340.45,
+                                                  no = ifelse(test = (solvent =='DMSO-2'),
+                                                             yes = auc/39340.45,
+                                                             no = ifelse(test = (solvent =='H2O'),
+                                                                         yes= auc/48859.36,
+                                                                         no =  auc/48859.36))))))%>%
+        
+  unique()
+
+
+s14_plat_rel<-S14stats%>% 
+  group_by(solvent) %>% 
+  bind_rows(., .) %>%
+  mutate(rel_fit_off_plate = ifelse(test = (solvent == 'ETOH'), 
+                                    yes = auc/69464.01,
+                                    no = ifelse(test = (solvent == 'ETOH-2'), 
+                                                yes = auc/69464.01,
+                                                no = ifelse(test = (solvent == 'DMSO'),
+                                                            yes = auc/69716.13,
+                                                            no = ifelse(test = (solvent =='DMSO-2'),
+                                                                        yes = auc/69716.13,
+                                                                        no = ifelse(test = (solvent =='H2O'),
+                                                                                    yes= auc/73568.27,
+                                                                                    no =  auc/73568.27))))))%>%
+  
+  unique()
+
+
+s45_plat_rel<-S45stats%>% 
+  group_by(solvent) %>% 
+  bind_rows(., .) %>%
+  mutate(rel_fit_off_plate = ifelse(test = (solvent == 'ETOH'), 
+                                    yes = auc/664722.48,
+                                    no = ifelse(test = (solvent == 'ETOH-2'), 
+                                                yes = auc/64722.48,
+                                                no = ifelse(test = (solvent == 'DMSO'),
+                                                            yes = auc/74970.44,
+                                                            no = ifelse(test = (solvent =='DMSO-2'),
+                                                                        yes = auc/74970.44,
+                                                                        no = ifelse(test = (solvent =='H2O'),
+                                                                                    yes= auc/78111.87,
+                                                                                    no =  auc/78111.87))))))%>%
+  
+  unique()
+
+s113_plat_rel<-S113stats%>% 
+  group_by(solvent) %>% 
+  bind_rows(., .) %>%
+  mutate(rel_fit_off_plate = ifelse(test = (solvent == 'ETOH'), 
+                                    yes = auc/77574.89,
+                                    no = ifelse(test = (solvent == 'ETOH-2'), 
+                                                yes = auc/77574.89,
+                                                no = ifelse(test = (solvent == 'DMSO'),
+                                                            yes = auc/73206.75,
+                                                            no = ifelse(test = (solvent =='DMSO-2'),
+                                                                        yes = auc/73206.75,
+                                                                        no = ifelse(test = (solvent =='H2O'),
+                                                                                    yes= auc/80648.28,
+                                                                                    no =  auc/80648.28))))))%>%
+  
+  unique()
+
+wlp_plat_rel<-WLPstats%>% 
+  group_by(solvent) %>% 
+  bind_rows(., .) %>%
+  mutate(rel_fit_off_plate = ifelse(test = (solvent == 'ETOH'), 
+                                    yes = auc/51464.56,
+                                    no = ifelse(test = (solvent == 'ETOH-2'), 
+                                                yes = auc/51464.56,
+                                                no = ifelse(test = (solvent == 'DMSO'),
+                                                            yes = auc/51579.41,
+                                                            no = ifelse(test = (solvent =='DMSO-2'),
+                                                                        yes = auc/51579.41,
+                                                                        no = ifelse(test = (solvent =='H2O'),
+                                                                                    yes= auc/58266.59,
+                                                                                    no =  auc/558266.59))))))%>%
+  
+  unique()
+
+
+w34_plat_rel<-W34stats%>% 
+  group_by(solvent) %>% 
+  bind_rows(., .) %>%
+  mutate(rel_fit_off_plate = ifelse(test = (solvent == 'ETOH'), 
+                                    yes = auc/89838.12,
+                                    no = ifelse(test = (solvent == 'ETOH-2'), 
+                                                yes = auc/89838.12,
+                                                no = ifelse(test = (solvent == 'DMSO'),
+                                                            yes = auc/79310.60,
+                                                            no = ifelse(test = (solvent =='DMSO-2'),
+                                                                        yes = auc/79310.60,
+                                                                        no = ifelse(test = (solvent =='H2O'),
+                                                                                    yes= auc/94964.75,
+                                                                                    no =  auc/94964.75))))))%>%
+  
+  unique()
+
+sample_stats<- rbind(U5_plat_rel,w34_plat_rel,wlp_plat_rel,s14_plat_rel,s45_plat_rel,s113_plat_rel)%>%
+  merge(ps, by = "plate")%>%
+  merge(byauc, by = c("sample", "well"))%>%
+  mutate(rel_fit_to_by = auc/BYauc)%>%
+  select(-BYauc)
+
+
+average_sample_stats <- aggregate(list(AVE_A=sample_stats$A, AVE_mu=sample_stats$mu, AVE_lambda=sample_stats$lambda,
+                                       AVE_DT=sample_stats$DT, AVE_auc= sample_stats$auc,ave_rel_GR = sample_stats$rel_max_GR,ave_rel_fit = sample_stats$rel_fitness, 
+                                       ave_rel_fit_off_plate=sample_stats$rel_fit_off_plate, ave_rel_fit_to_by = sample_stats$rel_fit_to_by), 
+                           by = list(compound=sample_stats$sample, strain= sample_stats$strain), mean)%>%
+  distinct()
+
+
+
+
+
+plate<- c("S1L1", "S1L2", "S2L1","S2L2","S3L1","S3L2")
+strain<-c("S6.14",
+           "S6.45",
+           "s6.113",
+           "u5.05",
+           "wlp.644",
+           "W.34.70")
+
+ps<-as.data.frame(cbind(plate,strain))
+
+byauc<-BYstats%>%
+  select(sample,auc, solvent, well)%>%
+  rename(c("auc"= "BYauc"))
+
+dat_meas<-data_meas%>%
+  rename(c("sample" = "compound"))%>%
+  merge(ps)
+avergage_measures<- merge(dat_meas, average_sample_stats, by = c("compound", "strain"))
+
+plot2 <- sum_measures %>% 
+  mtp_ggplot(aes(plate = plate, well = well)) + 
+  mtp_spec_96well() + 
+  geom_footprint(aes(fill = strain), alpha = .25) +
+  geom_notched_border() +
+  geom_col_label(size = 2) +
+  geom_row_label(size = 2) +
+  geom_well_rect(aes(fill = as.factor(control) , alpha = as.factor(ave_rel_fit))) +
+  geom_well_line(aes(x = runtime, y = measure), size = 0.2) + 
+  facet_wrap(~plate)
+
+xc<-sample_stats%>%
+  rename(c("sample"= "compound"))%>%
+  select(-solvent, -control, -control2, -run )
+
+sum_measures<- merge(dat_meas, xc, by = c("plate", "well", "compound", "strain"))
+
+uuu<-split(sum_measures, sum_measures$plate, drop = F)
+
+write.csv(sample_stats, "C:/Users/SamBr/documents/yeast/result files/RBSC3_all_mets.csv")
+
+write.csv(average_sample_stats, "C:/Users/SamBr/documents/yeast/result files/RBSC3_average_mets.csv")
+
+
+
+
+plot_rel_fit <- function(X){ 
+  X%>% 
+    mutate(plate = 1) %>% 
+    unnest() %>% 
+    mtp_ggplot(aes(plate = plate, well = well)) + 
+    mtp_spec_96well() + 
+    geom_footprint() + 
+    geom_notched_border() +
+    geom_col_label() + 
+    geom_row_label() + 
+    geom_well_rect(aes(fill = control, alpha = rel_fitness)) + 
+    geom_well_line(aes(x = runtime, y = measure)) + 
+    geom_well_text(aes(label = compound))
+  
+}
+
+plots<-lapply(uuu, plot_rel_fit)
+
+cowplot::plot_grid(plotlist = plots, nrow = 4)
+plot2
+names(avergage_measures)
+
+a<-uuu$S1L1
+b<-uuu$S1L2
+c<-uuu$S2L1
+d<-uuu$S2L2
+e<-uuu$S3L1
+f<-uuu$S3L2
+
+
+uuu$S3L2%>%
+  mutate(plate = 1) %>% 
+  unnest() %>% 
+  mtp_ggplot(aes(plate = plate, well = well)) + 
+  mtp_spec_96well() + 
+  geom_footprint() + 
+  geom_notched_border() +
+  geom_col_label() + 
+  geom_row_label() + 
+  geom_well_rect(aes(fill = control, alpha = rel_fitness)) + 
+  geom_well_line(aes(x = runtime, y = measure)) + 
+  geom_well_text(aes(label = compound))
+
+a02<-a[grepl("A02", a$well.x),]
+a08<-a[grepl("A08", a$well.x),]
+n<-which(is.na(sum_measures))
 ## function to calculate area undercurve
 
 calc_AUC <- function(n,z){
@@ -62,8 +333,8 @@ calc_AUC <- function(n,z){
   
   y <- n %>%
     filter(well == z)%>%
-    select(measure) 
-  Y<-y$measure 
+    select(measures_pp) 
+  Y<-y$measures_pp 
   
   
   sum(diff(X)*rollmean(Y,2))
@@ -195,15 +466,19 @@ calc_AUC_plate <- function(BY4743m){
               A10,	B10,	C10,	D10,	E10,	F10,	G10,	H10,
               A11,	B11,	C11,	D11,	E11,	F11,	G11,	H11,
               A12,	B12,	C12,	D12,	E12,	F12,	G12,	H12)
+  plate_id<-BY4743m%>%
+    select(well, plate)
   
   auc<-melt(AUC)
   names(auc) <- c("well", "auc")
   aucdata <- add_plate(
     data = auc, 
     file = "PLATE MAP.csv",
-    well_ids_column = "well")
+    well_ids_column = "well")%>%
+    merge(plate_id, by = "well")
   
 }
+
 
 
 ## calculate relative fitness and doubling time
@@ -280,6 +555,77 @@ relfit_DT<- function(BYstats){
   BYstats<-rbind(dmso,H2O,ETOH,dmso2,H2O2,ETOH2)%>%
     mutate(DT = log(2)/mu/3600)
 }
+
+
+
+relfit_DT_no_DMSO2<- function(BYstats){
+  xtt<-split(BYstats, BYstats$solvent) 
+  
+  dmso<-xtt$DMSO %>%
+    remove_rownames()
+ dmso<-dmso%>%
+   as.character(dmso$sample)%>%
+   make.unique(dmso$sample)%>%
+    column_to_rownames("sample")
+  
+  dmsocon <-dmso["DMSO control", "auc"]
+  dmsoconmu <-dmso["DMSO control", "mu"]
+  
+  dmso<-dmso%>%
+    rownames_to_column("sample") %>%
+    mutate(rel_fitness = auc/dmsocon, rel_max_GR = mu/dmsoconmu)
+  
+  H2O<-xtt$H2O %>%
+    remove_rownames() %>%
+    column_to_rownames("sample")
+  
+  H2Ocon <-H2O["H2O control", "auc"]
+  H2Oconmu <-H2O["H2O control", "mu"]
+  
+  H2O<-H2O%>%
+    rownames_to_column("sample") %>%
+    mutate(rel_fitness = auc/H2Ocon,  rel_max_GR = mu/H2Oconmu)
+  
+  ETOH<-xtt$ETOH %>%
+    remove_rownames() %>%
+    column_to_rownames("sample")
+  
+  etohcon <-ETOH["ETOH control", "auc"]
+  etohconmu <-ETOH["ETOH control", "mu"]
+  
+  ETOH<-ETOH%>%
+    rownames_to_column("sample") %>%
+    mutate(rel_fitness = auc/etohcon,  rel_max_GR = mu/etohconmu)
+  
+  
+  H2O2<-xtt$`H2O-2` %>%
+    remove_rownames() %>%
+    column_to_rownames("sample")
+  
+  H2Ocon2 <-H2O2["H2O control", "auc"]
+  H2Oconmu2 <-H2O2["H2O control", "mu"]
+  
+  H2O2<-H2O2%>%
+    rownames_to_column("sample") %>%
+    mutate(rel_fitness = auc/H2Ocon2,  rel_max_GR = mu/H2Oconmu2)
+  
+  
+  ETOH2<-xtt$`ETOH-2` %>%
+    remove_rownames() %>%
+    column_to_rownames("sample")
+  
+  etohcon2 <-ETOH2["ETOH control", "auc"]
+  etohconmu2 <-ETOH2["ETOH control", "mu"]
+  
+  ETOH2<-ETOH2%>%
+    rownames_to_column("sample") %>%
+    mutate(rel_fitness = auc/etohcon2,  rel_max_GR = mu/etohconmu2)
+  
+  BYstats<-rbind(dmso,H2O,ETOH,H2O2,ETOH2)%>%
+    mutate(DT = log(2)/mu/3600)
+}
+
+
 
 
 ## average stat per compound
