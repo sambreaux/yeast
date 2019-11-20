@@ -5,6 +5,9 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(ggpubr)
+library(viridis)
+library(car)
 ```
 
 
@@ -57,6 +60,119 @@ d3_mu<-merge(drug3_mu2, half2.3)
 samples_max_gr<-merge(d3_mu, d2_mu, drop = F)
 
 #need to: find mean and SD 
-#split by strain and control and arrange by control 
+#split by strain and solvent and arrange by control 
 ```
+
+```{r mean and sd}
+
+max_gr<-samples_max_gr%>%
+  select(-well)%>%
+  split(samples_max_gr$strain, drop = F)
+
+S113solv<-max_gr$S6.113
+
+s113solv<-split(S113solv, S113solv$solvent, drop = F)
+
+s113dmso<-s113solv$DMSO
+
+S113DMSO<-melt(s113dmso,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)
+?melt
+
+s113d<-S113DMSO%>%
+  mutate_at(vars(sample), funs (factor))
+ss<-s113d
+
+ss$sample <- ordered(ss$sample,
+                         levels = c("DMSO control", 
+                                    "5-Fluorouracil" ,
+                                    "6-Azauracil",
+                                    "CCCP",
+                                    "Cinnamic acid",
+                                    "Cycloheximide", 
+                                    "EDTA",
+                                    "Fluconazole",
+                                    "Guanidine hydrochloride",
+                                    "Miconazole Nitrate",     
+                                    "Miltefosine",
+                                    "Nystatin " ,
+                                    "Triclosan"   ))
+
+
+sg<-group_by(ss, sample) %>%
+  summarise(
+    count = n(),
+    mean = mean(mu, na.rm = TRUE),
+    sd = sd(mu, na.rm = TRUE)
+  )
+
+```
+
+```{r plots}
+ggboxplot(ss, x = "sample", y = "mu", 
+          color = "sample", palette = viridis(13),
+          order = c("DMSO control", 
+                                    "5-Fluorouracil" ,
+                                    "6-Azauracil",
+                                    "CCCP",
+                                    "Cinnamic acid",
+                                    "Cycloheximide", 
+                                    "EDTA",
+                                    "Fluconazole",
+                                    "Guanidine hydrochloride",
+                                    "Miconazole Nitrate",     
+                                    "Miltefosine",
+                                    "Nystatin " ,
+                                    "Triclosan"   ),
+          ylab = "mu", xlab = "Treatment")
+
+ggline(ss, x = "sample", y = "mu", 
+       add = c("mean_se", "jitter"), 
+        order = c("DMSO control", 
+                                    "5-Fluorouracil" ,
+                                    "6-Azauracil",
+                                    "CCCP",
+                                    "Cinnamic acid",
+                                    "Cycloheximide", 
+                                    "EDTA",
+                                    "Fluconazole",
+                                    "Guanidine hydrochloride",
+                                    "Miconazole Nitrate",     
+                                    "Miltefosine",
+                                    "Nystatin " ,
+                                    "Triclosan"   ),
+       ylab = "mu", xlab = "Treatment")
+```
+
+```{r anova}
+res.aov <- aov(mu ~ sample, data = ss)
+summary(res.aov)
+
+vv<-pairwise.t.test(ss$mu, ss$sample,
+                 p.adjust.method = "BH")
+bo<-as.data.frame (vv$p.value) %>%
+  select('DMSO control')%>%
+  rownames_to_column( var = "sample")
+
+sdmso<-merge(bo, ss)
+plot(res.aov, 2)
+
+mm<-oneway.test(mu ~ sample, data = ss)
+n<-TukeyHSD(res.aov)
+nn<-as.data.frame(n$sample)%>%
+  rownames_to_column(var = "sample")
+xs<- nn[grepl("DMSO", nn[["sample"]]),]%>%
+  select(sample, 'p adj')
+
+xs$sample <- gsub('-DMSO control', '', xs$sample)
+
+sdmso<-merge(xs, ss)
+
+
+is.data.frame(nn)
+
+leveneTest(mu ~ sample, data = ss)
+
+plot(res.aov, 1)
+```
+
 

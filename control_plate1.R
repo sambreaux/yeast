@@ -28,7 +28,7 @@ dataC <- add_plate(
   mutate(DT = log(2)/mu/3600)
 
 auc<-calc_AUC_plate2 (m_data2)
-dataC<-merge(dataC, auc, by = 'well')
+dataC<-merge(dataC, auc, by = c('well', "strain", "compound"))
 
 
 average_stats <- aggregate(list(AVE_A=dataC$A, AVE_mu=dataC$mu, AVE_lambda=dataC$lambda, AVE_DT=dataC$DT, AVE_auc= dataC$auc), 

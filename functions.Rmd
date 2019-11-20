@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{setup}
+```{r setup}
 getwd()
 library(tidyverse)
 library(plater)
@@ -525,113 +525,5 @@ plot_rel_fit <- function(X){
     geom_well_text(aes(label = sample))
   
 }
-```
-
-FUNCTION: add compound-well data to average stats data and merge stats with OD measurment data
-```{welldat}
-well_data<-function(BYaverage_stats,BY4743m){b<-merge(BYaverage_stats,hq)%>%
-  merge(BY4743m)
-}
-```
-
-
-FUNCTION: plot relative fitness (from plate controls) by plate and by compound average 
-```{relative fitness }
-
-##plot plate
-
-plot_plate_fitness<-function(BY4743m, BYstats){
-  VVV<-BY4743m%>%
-    
-    merge(BYstats)
-  
-  
-  VVV %>% 
-    mutate(plate = 1) %>% 
-    mtp_ggplot(aes(plate = plate, well = well)) + 
-    mtp_spec_96well(w=127.76*5, h=85.48*5) + 
-    geom_footprint() + 
-    geom_col_label() + 
-    geom_row_label() + 
-    geom_well_rect(aes ( fill = control, alpha = rel_fitness)) +
-    geom_well_line(aes(x = runtime, y = measure)) + 
-    geom_well_text(aes(label =str_wrap( sample,w = 10)),  colour="black") + 
-    guides(fill = FALSE)
-}
-
-
-
-
-#plot sample average 
-
-plot_ave_fitness<-function(BYaverage_stats,BY4743m){
-  well_data(BYaverage_stats,BY4743m) %>% 
-    mutate(plate = 1) %>% 
-    mtp_ggplot(aes(plate = plate, well = well)) + 
-    mtp_spec_96well(w=127.76*5, h=85.48*5) + 
-    geom_footprint() + 
-    geom_col_label() + 
-    geom_row_label() + 
-    geom_well_rect(aes ( fill =plate,alpha = AVE_rel_fit)) +
-    geom_well_line(aes(x = runtime, y = measure)) + 
-    geom_well_text(aes(label =str_wrap( sample,w = 10)),  colour="black") + 
-    guides(fill = FALSE)
-}
-
-
-```
-
-## calc AUC by sample
-
-BYauc<-calc_AUC_plate(BY4743m)
-U5auc<-calc_AUC_plate(U5.05m)
-S14auc<-calc_AUC_plate(S6.14m)
-S45auc<-calc_AUC_plate(S6.45m)
-S113auc<-calc_AUC_plate(S6.113m)
-W34auc<-calc_AUC_plate(W.34.70m)
-WLPauc<-calc_AUC_plate(WLP644m)
-
-## combine with processed data
-BYstats<-merge(BYauc, BY4743)%>%
-  relfit_DT()
-U5stats<-merge(U5auc, U5.05)%>%
-  relfit_DT()
-S14stats<-merge(S14auc, S6.14)%>%
-  relfit_DT()
-S45stats<-merge(S45auc, S6.45)%>%
-  relfit_DT()
-S113stats<-merge(S113auc, S6.113)%>%
-  relfit_DT()
-W34stats<-merge(W34auc, W.34.70)%>%
-  relfit_DT()
-WLPstats<-merge(WLPauc, WLP644)%>%
-  relfit_DT()
-
-BY4743stats<-BYstats%>%
-  select(c(well,auc,mu))
-colnames(BY4743stats) <- c("well", "BYauc","BYmu")
-
-BYstats[,"BYauc"] <- NA
-BYstats[,"BYmu"] <- NA
-BYstats[,"BYrel_auc"] <- NA
-BYstats[,"BYrel_mu"] <- NA
-
-calculate relative fitness(auc) and relative average growth for each plate based on off plate controls 
-have to edit this later for addition of DMSO and ETOh controls (currently only water)
-```{off plate controls}
-BYstats <-BYstats%>%
-  mutate(con_rel_auc = auc/102021.65, con_rel_mu = mu/6.0e-05)
-U5stats <-merge(BY4743stats, U5stats)%>%
-  mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/71112.73, con_rel_mu = mu/3.2e-05)
-S14stats<-merge(BY4743stats, S14stats)%>%
-  mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/104062.91, con_rel_mu = mu/3.8e-05)
-S45stats<-merge(BY4743stats, U5stats)%>%
-  mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/104530.84, con_rel_mu = mu/4.5e-05)
-S113stats<-merge(BY4743stats, U5stats)%>%
-  mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/107479.96, con_rel_mu = mu/3.1e-05)
-W34stats<-merge(BY4743stats, U5stats)%>%
-  mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/76260.33, con_rel_mu = mu/1.9e-05)
-WLPstats<-merge(BY4743stats, U5stats)%>%
-  mutate(BYrel_auc= auc/BYauc, BYrel_mu= mu/BYmu, con_rel_auc = auc/108883.04, con_rel_mu = mu/6.6e-05)
 ```
 
