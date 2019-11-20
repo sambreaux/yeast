@@ -1,0 +1,59 @@
+---
+title: "sig_testing"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r get right data}
+plate<-c("S1L1","S2L1",'S2L2',"S3L1","S3L2","S4L1","S4L2")
+strain<-c("BY4743","U5.05","S6.14","S6.45","S6.113","W.34.70", "WLP.644")
+
+ps2<-as.data.frame(cbind(plate,strain))
+
+drug2_mu<-d2_sum_metrics%>%
+  select( mu, sample, well, plate, control, solvent )%>%
+  merge(ps2)%>%
+  select(-plate)
+
+half2<-drug2_mu%>%
+  select(strain, sample, mu, control)
+half2<-half2[half2$control !=1,] %>%
+  select(-control)%>%
+  rename_col_by_position(3,"d2_mu_2")
+drug2_mu2<-drug2_mu[drug2_mu$control !=2,]%>%
+  select(-control)%>%
+  rename_col_by_position(1, "d2_mu")
+
+d2_mu<-merge(drug2_mu2, half2)
+
+plate<- c("S1L1", "S1L2", "S2L1","S2L2","S3L1","S3L2")
+strain<-c("S6.14","S6.45", "S6.113", "U5.05","WLP.644","W.34.70")
+
+ps3<-as.data.frame(cbind(plate,strain))
+
+drug3_mu<-d2_sum_metrics3%>%
+  select( mu, sample, well, plate, control, solvent )%>%
+  merge(ps3)%>%
+  select(-plate)
+
+
+half2.3<-drug3_mu%>%
+  select(strain, sample, mu, control)
+half2.3<-half2.3[half2.3$control !=1,] %>%
+  select(-control)%>%
+  rename_col_by_position(3,"d3_mu_2")
+drug3_mu2<-drug3_mu[drug3_mu$control !=2,]%>%
+  select(-control)%>%
+  rename_col_by_position(1, "d3_mu")
+
+d3_mu<-merge(drug3_mu2, half2.3)
+
+
+
+samples_max_gr<-merge(d3_mu, d2_mu, drop = F)
+```
+

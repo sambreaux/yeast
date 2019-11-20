@@ -1,0 +1,167 @@
+---
+title: "drug_plate_3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(plater)
+library(formattable)
+library(dplyr)
+library(zoo)
+library(htmlTable)
+library(reshape2)
+library(mtpview1)
+library(stringr)
+library(scales)
+library(cowplot)
+```
+
+
+```{r load data}
+##load data proccessed
+
+sum_dat<-read.csv("drug_run3_sum_dat.csv")
+
+Meas_dat<-read.csv("drug_run3_meas-dat.csv")
+
+## merge PD with Plate Map
+
+data_sum <- add_plate(
+  data = sum_dat, 
+  file = "PLATE MAP.csv",
+  well_ids_column = "well")
+
+data_meas <- add_plate(
+  data = Meas_dat, 
+  file = "PLATE MAP.csv",
+  well_ids_column = "well")
+
+##split dataframe based on plate 
+x<-split(data_sum, data_sum$plate, drop = F)
+xx<-split(data_meas, data_meas$plate, drop = F)
+
+```
+
+```{r ds, include=FALSE}
+
+S6.14<-x$S1L1
+S6.45<-x$S1L2
+s6.113<-x$S2L1
+u5.05<-x$S2L2
+wlp.644<-x$S3L1
+W.34.70<-x$S3L2
+
+
+S6.14mx<-xx$S1L1%>%
+  arrange(runtime)
+S6.45mx<-xx$S1L2%>%
+  arrange(runtime)
+s6.113mx<-xx$S2L1%>%
+  arrange(runtime)
+u5.05mx<-xx$S2L2%>%
+  arrange(runtime)
+wlp.644mx<-xx$S3L1%>%
+  arrange(runtime)
+W.34.70mx<-xx$S3L2%>%
+  arrange(runtime)
+```
+
+```{r auc }
+
+U5auc3<-calc_AUC_plate(u5.05mx)
+S14auc3<-calc_AUC_plate(S6.14mx)
+S45auc3<-calc_AUC_plate(S6.45mx)
+S113auc3<-calc_AUC_plate(s6.113mx)
+W34auc3<-calc_AUC_plate(W.34.70mx)
+Wlpauc3<-calc_AUC_plate(wlp.644mx)
+
+W34auc3$solvent<-(gsub("DMSO-2", "DMSO", W34auc3$solvent))
+W.34.70$solvent<-(gsub("DMSO-2", "DMSO", W.34.70$solvent))
+
+```
+
+```{r relative fit}
+
+U5rel3<-relative_fitness(lll, U5auc3, "U5-05", BYauc)
+S14rel3<-relative_fitness(lll,S14auc3, "S6-14", BYauc)
+S45rel3<-relative_fitness(lll, S45auc3, "S6-45", BYauc)
+S113rel3<-relative_fitness(lll, S113auc3, "S6-113", BYauc)
+W34rel3<-relative_fitness(lll, W34auc3, "W-34/70", BYauc)
+Wlprel3<-relative_fitness(lll, Wlpauc3, "WLP-644", BYauc)
+
+samples_relative3<-rbind(U5rel3,S14rel3,S45rel3,S113rel3,W34rel3,Wlprel3)
+
+```
+
+```{r doubling time and percent inhibition}
+
+U5dtpi3<-doubling_inhibtion(u5.05,lll, "U5-05")
+S14dtpi3<-doubling_inhibtion(S6.14,lll, "S6-14")
+S45dtpi3<-doubling_inhibtion(S6.45,lll, "S6-45")
+S113dtpi3<-doubling_inhibtion(s6.113,lll, "S6-113")
+W34dtpi3<-doubling_inhibtion(W.34.70,lll, "W-34/70")
+Wlpdtpi3<-doubling_inhibtion(wlp.644,lll, "WLP-644")
+
+sample_dt_pi3<-rbind(U5dtpi3, S14dtpi3, S45dtpi3, S113dtpi3, W34dtpi3, Wlpdtpi3)
+```
+
+```{r summary metrics}
+d2_sum_metrics3<-merge(samples_relative3, sample_dt_pi3, drop = FALSE)
+```
+
+```{r averages}
+
+
+average_sample_stats3 <- aggregate(list(AVE_A=d2_sum_metrics3$A, 
+                                       AVE_mu=d2_sum_metrics3$mu, 
+                                       AVE_lambda=d2_sum_metrics3$lambda,
+                                       AVE_DT=d2_sum_metrics3$DT, 
+                                       AVE_auc= d2_sum_metrics3$auc, 
+                                       ave_rel_inhib_off_Plate = d2_sum_metrics3$percent_inhib_off_plate,
+                                       ave_rel_inhib = d2_sum_metrics3$percent_inhib_onplate,
+                                       ave_rel_fit = d2_sum_metrics3$rel_fit_on_plate,
+                                       ave_rel_fit_off_plate=d2_sum_metrics3$rel_fit_off_plate, 
+                                       ave_rel_fit_to_by = d2_sum_metrics3$rel_fit_to_by), 
+                           by = list(compound=d2_sum_metrics3$sample, plate= d2_sum_metrics3$plate), mean)%>%
+  distinct()
+```
+
+```{r plots}
+
+data_meas3<-data_meas%>%
+  select(-solvent)
+d2_sum_measures3<-merge(d2_sum_metrics3, data_meas3, drop = FALSE)
+
+
+d2_sum_measures3%>% 
+    unnest() %>% 
+    mtp_ggplot(aes(plate = plate, well = well)) + 
+    mtp_spec_96well() + 
+    geom_footprint() + 
+    geom_notched_border() +
+    geom_col_label() + 
+    geom_row_label() + 
+    geom_well_rect(aes(fill = control, alpha = rel_fit_on_plate)) + 
+    geom_well_line(aes(x = runtime, y = measure)) + 
+    geom_well_text(aes(label = sample)) + 
+    facet_wrap(~plate)
+
+d2_sum_measures3%>% 
+    unnest() %>% 
+    mtp_ggplot(aes(plate = plate, well = well)) + 
+    mtp_spec_96well() + 
+    geom_footprint() + 
+    geom_notched_border() +
+    geom_col_label() + 
+    geom_row_label() + 
+    geom_well_rect(aes(fill = control, alpha = rel_fit_off_plate)) + 
+    geom_well_line(aes(x = runtime, y = measure)) + 
+    geom_well_text(aes(label = sample)) + 
+    facet_wrap(~plate)
+
+```
+
+
+
