@@ -55,5 +55,8 @@ d3_mu<-merge(drug3_mu2, half2.3)
 
 
 samples_max_gr<-merge(d3_mu, d2_mu, drop = F)
+
+#need to: find mean and SD 
+#split by strain and control and arrange by control 
 ```
 
