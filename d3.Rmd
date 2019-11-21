@@ -134,6 +134,8 @@ data_meas3<-data_meas%>%
   select(-solvent)
 d2_sum_measures3<-merge(d2_sum_metrics3, data_meas3, drop = FALSE)
 
+write.csv(d2_sum_metrics3, "C:/Users/Sam/documents/yeast/RF2/d3_sum_mets.csv" )
+write.csv(average_sample_stats3, "C:/Users/Sam/documents/yeast/RF2/d3_ave_sum_mets.csv")
 
 d2_sum_measures3%>% 
     unnest() %>% 
@@ -146,7 +148,7 @@ d2_sum_measures3%>%
     geom_well_rect(aes(fill = control, alpha = rel_fit_on_plate)) + 
     geom_well_line(aes(x = runtime, y = measure)) + 
     geom_well_text(aes(label = sample)) + 
-    facet_wrap(~plate)
+    facet_wrap(~plate, ncol = 1)
 
 d2_sum_measures3%>% 
     unnest() %>% 
@@ -159,7 +161,7 @@ d2_sum_measures3%>%
     geom_well_rect(aes(fill = control, alpha = rel_fit_off_plate)) + 
     geom_well_line(aes(x = runtime, y = measure)) + 
     geom_well_text(aes(label = sample)) + 
-    facet_wrap(~plate)
+    facet_wrap(~plate, ncol = 1)
 
 ```
 

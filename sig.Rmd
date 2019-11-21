@@ -9,7 +9,8 @@ library(ggpubr)
 library(viridis)
 library(car)
 ```
-
+#SIG IS COMPARISON OF MU OR MAX GROWTH RATES
+## LOOK FOR SIG BETWEEN PLATES AS A WAY OF DETERMING RELATION 
 
 ```{r get right data}
 plate<-c("S1L1","S2L1",'S2L2',"S3L1","S3L2","S4L1","S4L2")
@@ -70,14 +71,14 @@ max_gr<-samples_max_gr%>%
   split(samples_max_gr$strain, drop = F)
 
 S113solv<-max_gr$S6.113
+strain <-s113sol
 
 s113solv<-split(S113solv, S113solv$solvent, drop = F)
 
 s113dmso<-s113solv$DMSO
 
 S113DMSO<-melt(s113dmso,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)
-?melt
-
+ 
 s113d<-S113DMSO%>%
   mutate_at(vars(sample), funs (factor))
 ss<-s113d
@@ -105,24 +106,49 @@ sg<-group_by(ss, sample) %>%
     sd = sd(mu, na.rm = TRUE)
   )
 
+#####
+s113h2o<-s113solv$H2O
+
+s113h2o<-melt(s113h2o,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
+  mutate_at(vars(sample), funs (factor))
+
+
+s113h2o$sample <- ordered(s113h2o$sample,
+                         levels = c( "H2O control ", 
+                                    "2-Deoxy-D-glucose" , "3-Amino-1,2,4- triazole" , "4-Aminopyridine" ,"5-Fluorocytosine" , "Azaserine*",
+                                    "Benzamidine" , "Blasticidin hydrochloride" ,"Caffeine", "Cetylpyridinium chloride",
+                                    "Chlorpromazine hydrochloride ", "Compound 48/80*" , "Copper(II) sulfate", "Dequalinium Chloride" , 
+                                    "Diamide", "DTT", "Hydroxyurea" , "Hygromycin B" , "methylmethane sulfonate", "Pentamidine Isethionate",
+                                    "Poly-L-lysine hydrochloride" ,  "Sodium Fluoride" ,"Sodium metasilicate" , "Sodium Orthovanadate" ,
+                                    "Sodium Selenate","Tamoxifen","Tartaric acid" ,"Thialysine","Thiourea" ,"Trifluoperazine" ,
+                                    "Urea hydrogen peroxide"))
+                         
+     levels(s113h2o$sample)
+####
+     
+s113ETOH<-s113solv$ETOH
+
+s113ETOH<-melt(s113ETOH,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
+  mutate_at(vars(sample), funs (factor))
+
+
+s113ETOH$sample <- ordered(s113ETOH$sample,
+                         levels = c( "ETOH control ", 
+                                    "Menadione ",
+                                    "Myclobutanil",
+                                    "Propiconazole"))
+                         
+     levels(s113ETOH$sample)                 
+                        
 ```
 
 ```{r plots}
-ggboxplot(ss, x = "sample", y = "mu", 
-          color = "sample", palette = viridis(13),
-          order = c("DMSO control", 
-                                    "5-Fluorouracil" ,
-                                    "6-Azauracil",
-                                    "CCCP",
-                                    "Cinnamic acid",
-                                    "Cycloheximide", 
-                                    "EDTA",
-                                    "Fluconazole",
-                                    "Guanidine hydrochloride",
-                                    "Miconazole Nitrate",     
-                                    "Miltefosine",
-                                    "Nystatin " ,
-                                    "Triclosan"   ),
+ggboxplot(s113ETOH, x = "sample", y = "mu", 
+          color = "sample", palette = viridis(31),
+          order = c(  "ETOH control ", 
+                                    "Menadione ",
+                                    "Myclobutanil",
+                                    "Propiconazole"),
           ylab = "mu", xlab = "Treatment")
 
 ggline(ss, x = "sample", y = "mu", 
@@ -143,36 +169,158 @@ ggline(ss, x = "sample", y = "mu",
        ylab = "mu", xlab = "Treatment")
 ```
 
-```{r anova}
-res.aov <- aov(mu ~ sample, data = ss)
-summary(res.aov)
+```{r t-test}
+
 
 vv<-pairwise.t.test(ss$mu, ss$sample,
-                 p.adjust.method = "BH")
-bo<-as.data.frame (vv$p.value) %>%
-  select('DMSO control')%>%
+                 p.adjust.method = "fdr")
+bo<-as.data.frame (vv$p.value)  %>%
+  rename_col_by_position(1, "p_adj" )%>%
+  select("p_adj")%>%
   rownames_to_column( var = "sample")
-
-sdmso<-merge(bo, ss)
-plot(res.aov, 2)
-
-mm<-oneway.test(mu ~ sample, data = ss)
-n<-TukeyHSD(res.aov)
-nn<-as.data.frame(n$sample)%>%
-  rownames_to_column(var = "sample")
-xs<- nn[grepl("DMSO", nn[["sample"]]),]%>%
-  select(sample, 'p adj')
-
-xs$sample <- gsub('-DMSO control', '', xs$sample)
-
-sdmso<-merge(xs, ss)
+  
 
 
-is.data.frame(nn)
 
-leveneTest(mu ~ sample, data = ss)
 
-plot(res.aov, 1)
+
+
+########
+
+
+vvh<-pairwise.t.test(s113h2o$mu, s113h2o$sample,
+                 p.adjust.method = "fdr")
+boh<-as.data.frame (vvh$p.value)  %>%
+  rename_col_by_position(1, "p_adj" )%>%
+  select("p_adj")%>%
+  rownames_to_column( var = "sample")
+  
+
+
+
+##########
+
+
+vve<-pairwise.t.test(s113ETOH$mu, s113ETOH$sample,
+                 p.adjust.method = "fdr")
+
+boe<-as.data.frame (vve$p.value) %>%
+  rename_col_by_position(1, "p_adj" )%>%
+  select("p_adj")%>%
+  rownames_to_column( var = "sample")
+  
+
+s113_pvalues<-rbind(boh,boe, bo)
+
+96*2
+93*2
+```
+
+```{r pvalues}
+s14_pv<-get_p_values(max_gr$S6.14)
+s45_pv<-get_p_values(max_gr$S6.45)
+s113_pv<-get_p_values(max_gr$S6.113)
+u5_pv<-get_p_values(max_gr$U5.05)
+wlp_pv<-get_p_values(max_gr$WLP.644)
+w34_pv<-get_p_values(max_gr$W.34.70)
+
+samples_pvalues<-rbind(s14_pv,s45_pv,s113_pv,u5_pv,wlp_pv, w34_pv)
+
 ```
 
 
+```{r sig if}
+samples_p_sig<- samples_pvalues%>%
+  mutate(sig = ifelse(test = (p_adj <= .05), 
+                      yes = 1,
+                      no = 0))
+
+```
+
+
+```{r plot}
+ samples_p_sig2<- merge(  samples_p_sig, ps3)
+d2_sum_measures3x<- merge(  d2_sum_measures3, ps3)
+
+
+meas_pvalues_3<- left_join(d2_sum_measures3x, samples_p_sig2, by = c("plate", "sample", "strain"), drop = F)%>%
+  mutate_all(~replace(., is.na(.), 0))
+
+#on_plate_sig_plots<-
+  meas_pvalues_3%>% 
+    unnest() %>% 
+    mtp_ggplot(aes(plate = plate, well = well)) + 
+    mtp_spec_96well() + 
+    geom_footprint()+ 
+    geom_notched_border() +
+    geom_col_label(size = 2) + 
+    geom_row_label(size = 2) + 
+    geom_well_rect(aes(fill = control, alpha = sig)) + 
+    geom_well_line(aes(x = runtime, y = measure)) + 
+    geom_well_text(aes(label = sample )) + 
+    facet_wrap(~plate, ncol = 1) 
+
+
+?facet_wrap
+```
+
+
+```{r off_plate_p }
+s14_pvo<-get_p_values_off(max_gr$S6.14, dataC, "S6-14")
+s45_pvo<-get_p_values_off(max_gr$S6.45, dataC, "S6-45")
+s113_pvo<-get_p_values_off(max_gr$S6.113, dataC, "S6-113")
+u5_pvo<-get_p_values_off(max_gr$U5.05,  dataC, "U5-05")
+wlp_pvo<-get_p_values_off(max_gr$WLP.644, dataC, "WLP-644")
+w34_pvo<-get_p_values_off(max_gr$W.34.70, dataC, "W-34/70")
+
+
+samples_pvalues_off<-rbind(s14_pvo,s45_pvo,s113_pvo,u5_pvo,wlp_pvo, w34_pvo)
+
+
+samples_p_sig_off<- samples_pvalues_off%>%
+  mutate(sig = ifelse(test = (p_adj <= .05), 
+                      yes = 1,
+                      no = 0))
+```
+
+
+```{r plot}
+ samples_p_sig_off2<- merge(  samples_p_sig_off, ps3)
+d2_sum_measures3x<- merge(  d2_sum_measures3, ps3)
+
+
+meas_pvalues_off_3<- left_join(d2_sum_measures3x, samples_p_sig_off2, by = c("plate", "sample", "strain"), drop = F)%>%
+  mutate_all(~replace(., is.na(.), 0))
+
+#on_plate_sig_plots<-
+  meas_pvalues_3%>% 
+    unnest() %>% 
+    mtp_ggplot(aes(plate = plate, well = well)) + 
+    mtp_spec_96well() + 
+    geom_footprint()+ 
+    geom_notched_border() +
+    geom_col_label(size = 2) + 
+    geom_row_label(size = 2) + 
+    geom_well_rect(aes(fill = control, alpha = sig)) + 
+    geom_well_line(aes(x = runtime, y = measure)) + 
+    geom_well_text(aes(label = sample )) + 
+    facet_wrap(~plate, ncol = 1) 
+
+
+?facet_wrap
+```
+
+
+```{r mean sd }
+
+s14_msd<-get_mean_SD(max_gr$S6.14)
+s45_msd<-get_mean_SD(max_gr$S6.45)
+s113_msd<-get_mean_SD(max_gr$S6.113)
+u5_msd<-get_mean_SD(max_gr$U5.05)
+wlp_msd<-get_mean_SD(max_gr$WLP.644)
+w34_msd<-get_mean_SD(max_gr$W.34.70)
+
+
+samples_mean_sd<- rbind(s14_msd,s45_msd,s113_msd,u5_msd, wlp_msd,w34_msd)
+
+```

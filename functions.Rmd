@@ -527,3 +527,343 @@ plot_rel_fit <- function(X){
 }
 ```
 
+
+```{r pvalues}
+
+#list_frame= list$strain where strain contains values to be tested (mu)
+get_p_values<-function(list_strain){
+  
+ s_solv<-list_strain
+strain <-s_solv$strain
+
+s_solv<-split(s_solv, s_solv$solvent, drop = F)
+##
+
+xdmso<-s_solv$DMSO
+
+xdmso<-melt(xdmso,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
+  mutate_at(vars(sample), funs (factor))
+
+
+
+xdmso$sample <- ordered(xdmso$sample,
+                         levels = c("DMSO control", 
+                                    "5-Fluorouracil" ,"6-Azauracil","CCCP",
+                                    "Cinnamic acid","Cycloheximide","EDTA",
+                                    "Fluconazole", "Guanidine hydrochloride","Miconazole Nitrate", 
+                                    "Miltefosine","Nystatin ", "Triclosan"   ))
+
+
+
+
+
+###
+xh2o<-s_solv$H2O
+
+xh2o<-melt(xh2o,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
+  mutate_at(vars(sample), funs (factor))
+
+
+xh2o$sample <- ordered(xh2o$sample,
+                         levels = c( "H2O control ", 
+                                    "2-Deoxy-D-glucose" , "3-Amino-1,2,4- triazole" , "4-Aminopyridine" ,"5-Fluorocytosine" , "Azaserine*",
+                                    "Benzamidine" , "Blasticidin hydrochloride" ,"Caffeine", "Cetylpyridinium chloride",
+                                    "Chlorpromazine hydrochloride ", "Compound 48/80*" , "Copper(II) sulfate", "Dequalinium Chloride" , 
+                                    "Diamide", "DTT", "Hydroxyurea" , "Hygromycin B" , "methylmethane sulfonate", "Pentamidine Isethionate",
+                                    "Poly-L-lysine hydrochloride" ,  "Sodium Fluoride" ,"Sodium metasilicate" , "Sodium Orthovanadate" ,
+                                    "Sodium Selenate","Tamoxifen","Tartaric acid" ,"Thialysine","Thiourea" ,"Trifluoperazine" ,
+                                    "Urea hydrogen peroxide"))
+                         
+     
+
+###
+     
+xETOH<-s_solv$ETOH
+
+xETOH<-melt(xETOH,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
+  mutate_at(vars(sample), funs (factor))
+
+
+xETOH$sample <- ordered(xETOH$sample,
+                         levels = c( "ETOH control ", 
+                                    "Menadione ",
+                                    "Myclobutanil",
+                                    "Propiconazole"))
+                         
+     
+
+###################     
+    
+  vv<-pairwise.t.test(xdmso$mu, xdmso$sample,
+                 p.adjust.method = "fdr")
+bo<-as.data.frame (vv$p.value)  %>%
+  rename_col_by_position(1, "p_adj" )%>%
+  select("p_adj")%>%
+  rownames_to_column( var = "sample")
+  
+
+
+
+
+
+
+########
+
+
+vvh<-pairwise.t.test(xh2o$mu, xh2o$sample,
+                 p.adjust.method = "fdr")
+boh<-as.data.frame (vvh$p.value)  %>%
+  rename_col_by_position(1, "p_adj" )%>%
+  select("p_adj")%>%
+  rownames_to_column( var = "sample")
+  
+
+
+
+##########
+
+ 
+vve<-pairwise.t.test(xETOH$mu, xETOH$sample,
+                 p.adjust.method = "fdr")
+
+boe<-as.data.frame (vve$p.value) %>%
+  rename_col_by_position(1, "p_adj" )%>%
+  select("p_adj")%>%
+  rownames_to_column( var = "sample")
+ 
+
+#################################################### 
+
+pvalues<-rbind(boh,boe, bo)%>%
+  merge( strain)%>%
+  rename_col_by_position(3, strain)%>%
+  unique()
+} 
+
+
+
+
+dddddd<- get_p_values(max_gr$S6.45)
+```
+
+```{r pvalues on plate}
+
+
+  
+
+#list_strain= list$strain where strain contains values to be tested (mu)
+get_p_values_off<-function(list_strain, off_summary, current_sample){
+ 
+  control_mu<-off_summary%>%
+  select(mu, compound, strain)%>%
+  rename_col_by_position(2, "sample")%>%
+  rename_col_by_position(3, "variable") 
+
+ s_solv<-list_strain
+strain <-s_solv$strain
+
+s_solv<-split(s_solv, s_solv$solvent, drop = F)
+
+##
+ off_dmso<- control_mu[control_mu$sample == "DMSO",]
+  off_dmso<-off_dmso[off_dmso$variable == current_sample,]
+
+
+xdmso<-s_solv$DMSO
+
+xdmso<-melt(xdmso,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
+  mutate_at(vars(sample), funs (factor))%>%rbind(off_dmso)
+
+xdmso$sample <- ordered(xdmso$sample,
+                         levels = c("DMSO", "DMSO control", 
+                                    "5-Fluorouracil" ,"6-Azauracil","CCCP",
+                                    "Cinnamic acid","Cycloheximide","EDTA",
+                                    "Fluconazole", "Guanidine hydrochloride","Miconazole Nitrate", 
+                                    "Miltefosine","Nystatin ", "Triclosan"   ))
+
+
+
+###
+
+ off_h2o<- control_mu[control_mu$sample == "H2O",]
+  off_h2o<-off_h2o[off_h2o$variable == current_sample,]
+  
+xh2o<-s_solv$H2O
+
+xh2o<-melt(xh2o,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
+  mutate_at(vars(sample), funs (factor))%>%rbind(off_h2o)
+
+xh2o$sample <- ordered(xh2o$sample,
+                         levels = c( "H2O","H2O control ", 
+                                    "2-Deoxy-D-glucose" , "3-Amino-1,2,4- triazole" , "4-Aminopyridine" ,"5-Fluorocytosine" , "Azaserine*",
+                                    "Benzamidine" , "Blasticidin hydrochloride" ,"Caffeine", "Cetylpyridinium chloride",
+                                    "Chlorpromazine hydrochloride ", "Compound 48/80*" , "Copper(II) sulfate", "Dequalinium Chloride" , 
+                                    "Diamide", "DTT", "Hydroxyurea" , "Hygromycin B" , "methylmethane sulfonate", "Pentamidine Isethionate",
+                                    "Poly-L-lysine hydrochloride" ,  "Sodium Fluoride" ,"Sodium metasilicate" , "Sodium Orthovanadate" ,
+                                    "Sodium Selenate","Tamoxifen","Tartaric acid" ,"Thialysine","Thiourea" ,"Trifluoperazine" ,
+                                    "Urea hydrogen peroxide"))
+                         
+     
+
+###
+  
+off_ETOH<- control_mu[control_mu$sample == "ETOH",]
+  off_ETOH<-off_ETOH[off_ETOH$variable == current_sample,]
+   
+xETOH<-s_solv$ETOH
+
+xETOH<-melt(xETOH,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
+  mutate_at(vars(sample), funs (factor))%>%
+  rbind(off_ETOH)
+
+
+
+xETOH$sample <- ordered(xETOH$sample,
+                         levels = c( "ETOH","ETOH control ", 
+                                    "Menadione ",
+                                    "Myclobutanil",
+                                    "Propiconazole"))
+                         
+     
+
+###################     
+    
+  vv<-pairwise.t.test(xdmso$mu, xdmso$sample,
+                 p.adjust.method = "fdr")
+bo<-as.data.frame (vv$p.value)  %>%
+  rename_col_by_position(1, "p_adj" )%>%
+  select("p_adj")%>%
+  rownames_to_column( var = "sample")
+  
+
+
+
+
+
+
+########
+
+
+vvh<-pairwise.t.test(xh2o$mu, xh2o$sample,
+                 p.adjust.method = "fdr")
+boh<-as.data.frame (vvh$p.value)  %>%
+  rename_col_by_position(1, "p_adj" )%>%
+  select("p_adj")%>%
+  rownames_to_column( var = "sample")
+  
+
+
+
+##########
+
+ 
+vve<-pairwise.t.test(xETOH$mu, xETOH$sample,
+                 p.adjust.method = "fdr")
+
+boe<-as.data.frame (vve$p.value) %>%
+  rename_col_by_position(1, "p_adj" )%>%
+  select("p_adj")%>%
+  rownames_to_column( var = "sample")
+ 
+
+#################################################### 
+
+pvalues<-rbind(boh,boe, bo)%>%
+  merge( strain)%>%
+  rename_col_by_position(3, strain)%>%
+  unique()
+} 
+
+
+
+
+dddddd<- get_p_values_off(max_gr$S6.45, dataC, "S6-45")
+```
+
+```{r mean SD}
+get_mean_SD<-function(list_strain){
+  
+ s_solv<-list_strain
+strain <-s_solv$strain
+
+s_solv<-split(s_solv, s_solv$solvent, drop = F)
+##
+
+xdmso<-s_solv$DMSO
+
+xdmso<-melt(xdmso,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
+  mutate_at(vars(sample), funs (factor))
+
+
+
+xdmso$sample <- ordered(xdmso$sample,
+                         levels = c("DMSO control", 
+                                    "5-Fluorouracil" ,"6-Azauracil","CCCP",
+                                    "Cinnamic acid","Cycloheximide","EDTA",
+                                    "Fluconazole", "Guanidine hydrochloride","Miconazole Nitrate", 
+                                    "Miltefosine","Nystatin ", "Triclosan"   ))
+
+xd<-group_by(xdmso, sample) %>%
+  summarise(
+    count = n(),
+    mean = mean(mu, na.rm = TRUE),
+    sd = sd(mu, na.rm = TRUE)
+  )
+
+
+
+###
+xh2o<-s_solv$H2O
+
+xh2o<-melt(xh2o,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
+  mutate_at(vars(sample), funs (factor))
+
+
+xh2o$sample <- ordered(xh2o$sample,
+                         levels = c( "H2O control ", 
+                                    "2-Deoxy-D-glucose" , "3-Amino-1,2,4- triazole" , "4-Aminopyridine" ,"5-Fluorocytosine" , "Azaserine*",
+                                    "Benzamidine" , "Blasticidin hydrochloride" ,"Caffeine", "Cetylpyridinium chloride",
+                                    "Chlorpromazine hydrochloride ", "Compound 48/80*" , "Copper(II) sulfate", "Dequalinium Chloride" , 
+                                    "Diamide", "DTT", "Hydroxyurea" , "Hygromycin B" , "methylmethane sulfonate", "Pentamidine Isethionate",
+                                    "Poly-L-lysine hydrochloride" ,  "Sodium Fluoride" ,"Sodium metasilicate" , "Sodium Orthovanadate" ,
+                                    "Sodium Selenate","Tamoxifen","Tartaric acid" ,"Thialysine","Thiourea" ,"Trifluoperazine" ,
+                                    "Urea hydrogen peroxide"))
+                         
+   xh<-group_by(xh2o, sample) %>%
+  summarise(
+    count = n(),
+    mean = mean(mu, na.rm = TRUE),
+    sd = sd(mu, na.rm = TRUE)
+  )  
+
+###
+     
+xETOH<-s_solv$ETOH
+
+xETOH<-melt(xETOH,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
+  mutate_at(vars(sample), funs (factor))
+
+
+xETOH$sample <- ordered(xETOH$sample,
+                         levels = c( "ETOH control ", 
+                                    "Menadione ",
+                                    "Myclobutanil",
+                                    "Propiconazole"))
+                         
+     
+
+
+
+
+xe<-group_by(xETOH, sample) %>%
+  summarise(
+    count = n(),
+    mean = mean(mu, na.rm = TRUE),
+    sd = sd(mu, na.rm = TRUE)
+  )
+mean_sd<-rbind(xe,xh,xd)%>%
+  merge(strain)%>%
+  unique
+
+}
+```

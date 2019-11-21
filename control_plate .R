@@ -28,7 +28,7 @@ dataC <- add_plate(
   mutate(DT = log(2)/mu/3600)
 
 auc<-calc_AUC_plate2 (m_data2)
-dataC<-merge(dataC, auc, by = 'well')
+dataC<-merge(dataC, auc, by = c('well', 'compound', 'strain'))
 
 
 average_stats <- aggregate(list(AVE_A=dataC$A, AVE_mu=dataC$mu, AVE_lambda=dataC$lambda, AVE_DT=dataC$DT, AVE_auc= dataC$auc), 
@@ -45,8 +45,8 @@ lll<-average_stats%>%
                                    no = AVE_auc/104331.16))) %>%
   unique()
 
-write.csv(lll, "C:/Users/SamBr/documents/yeast/result files/control_plate_av.csv")
-
+write.csv(lll, "C:/Users/Sam/documents/yeast/RF2/control_plate_av.csv")
+write.csv(dataC, "C:/Users/Sam/documents/yeast/RF2/control_plate_sum_mets.csv")
 ## function to calculate area undercurve
 
 calc_AUC2 <- function(n,z){

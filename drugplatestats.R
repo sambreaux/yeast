@@ -9,7 +9,7 @@ library(reshape2)
 library(mtpview1)
 library(stringr)
 library(scales)
-
+?mtpview1
 ##load data proccessed
 
 GD<-read.csv("2019-07-02_summarised-data (1).csv")
@@ -63,7 +63,7 @@ calc_AUC <- function(n,z){
   
   y <- n %>%
     filter(well == z)%>%
-    select(measure) 
+    select(measures_pp) 
   Y<-y$measure 
   
   
@@ -290,6 +290,7 @@ get_ave_stats <- function(BYstats) {
                                      by = list(sample=BYstats$sample), mean), df)%>%
     distinct()
 }
+
 
 
 ##plot plate
@@ -571,8 +572,8 @@ AVE_plot_plate_BYmu<-function(BYaverage_stats,BY4743m){
     guides(fill = FALSE)
 }
 
-AVE_plot_plate_conauc<-function(BYaverage_stats,BY4743m){
-  well_data(BYaverage_stats,BY4743m) %>% 
+AVE_plot_plate_conauc<-function(hj2,U5.05m){
+  well_data(hj2,U5.05m) %>% 
     mutate(plate = 1) %>% 
     mtp_ggplot(aes(plate = plate, well = well)) + 
     mtp_spec_96well(w=127.76*5, h=85.48*5) + 
@@ -585,8 +586,8 @@ AVE_plot_plate_conauc<-function(BYaverage_stats,BY4743m){
     guides(fill = FALSE)
 }
 
-AVE_plot_plate_conmu<-function(BYaverage_stats,BY4743m){
-  well_data(BYaverage_stats,BY4743m) %>% 
+AVE_plot_plate_conmu<-function(hj2, U5.05m){
+  well_data(hj2, U5.05m) %>% 
     mutate(plate = 1) %>%
     mtp_ggplot(aes(plate = plate, well = well)) + 
     mtp_spec_96well(w=127.76*5, h=85.48*5) + 
@@ -600,6 +601,8 @@ AVE_plot_plate_conmu<-function(BYaverage_stats,BY4743m){
 }
 
 
+  getwd()
+  
 
 plot_plate_fitness(U5.05m, U5stats)
 plot_plate_mu(U5stats,U5.05m)
@@ -612,8 +615,7 @@ plot_ave_fitness(U5average_stats, U5.05m)
 AVE_plot_plate_mu(U5average_stats, U5.05m)
 AVE_plot_plate_BYauc(U5average_stats, U5.05m)
 AVE_plot_plate_BYmu(U5average_stats, U5.05m)
-AVE_plot_plate_conauc(U5average_stats, U5.05m)
-AVE_plot_plate_conmu(U5average_stats, U5.05m)
+AVE_plot_plate_conauc(U5stats, U5.05m)
 
 
 BY4743m
@@ -625,8 +627,56 @@ W.34.70m, W34stats
 WLP644m, WLPstats
 
 U5average_stats, U5.05m
-S14average_stats, S6.14m
-S45average_stats, S6.45m
-S113average_stats, S6.113m
-W34average_stats, W.34.70m
-WLPaverage_stats, WLP644m
+S14average_stats<-S14average_stats%>%
+  select(-AVE_con_rel_auc, AVE_con_rel_mu)%>%
+  merge(sample_solvent, by = "sample")%>%
+  cbind(strain = "S6-14")%>%
+  merge(ACD, by = c("strain", "solvent"))
+S45average_stats<-S45average_stats%>%
+  select(-AVE_con_rel_auc, AVE_con_rel_mu)%>%
+  merge(sample_solvent, by = "sample")%>%
+  cbind(strain = "S6-45")%>%
+  merge(ACD, by = c("strain", "solvent"))
+S113average_stats<-S113average_stats%>%
+  select(-AVE_con_rel_auc, AVE_con_rel_mu)%>%
+  merge(sample_solvent, by = "sample")%>%
+  cbind(strain = "S6-113")%>%
+  merge(ACD, by = c("strain", "solvent"))
+W34average_stats<-W34average_stats%>%
+  select(-AVE_con_rel_auc, AVE_con_rel_mu)%>%
+  merge(sample_solvent, by = "sample")%>%
+  cbind(strain = "W-34/70")%>%
+  merge(ACD, by = c("strain", "solvent"))
+WLPaverage_stats<-WLPaverage_stats%>%
+  select(-AVE_con_rel_auc, AVE_con_rel_mu)%>%
+  merge(sample_solvent, by = "sample")%>%
+  cbind(strain = "WLP-644")%>%
+  merge(ACD, by = c("strain", "solvent"))
+
+
+
+sample_solvent<-cbind(sample=BYauc$sample, solvent =BYauc$solvent)%>%
+  as.data.frame()
+
+toMatch<-c('^H2O$', '^DMSO$', '^ETOH$')
+
+sample_solvent<-filter(sample_solvent, grepl(paste(toMatch, collapse="|"), solvent))
+
+strains<- list(BYaverage_stats = BYaverage_stats,S14average_stats = S14average_stats,S45average_stats = S45average_stats, S113average_stats= S113average_stats,U5average_stats = U5average_stats,WLPaverage_stats= WLPaverage_stats,W34average_stats = W34average_stats)
+#con_rel =control plate relative 
+ACD<-average_control_data %>% 
+  rename(c('sample'='solvent', 'AVE_auc'='CPauc', 'AVE_A'='CPA', 'AVE_mu'='CPmu', 'AVE_lambda'='CPlambda', 'AVE_DT'='CPDT'))
+
+ACD$CPauc<- as.numeric(as.character( ACD$CPauc))
+ACD$CPmu<- as.numeric(as.character( ACD$CPmu))
+
+hj<-U5average_stats%>%
+  select(-AVE_con_rel_auc, AVE_con_rel_mu)%>%
+  merge(sample_solvent, by = "sample")%>%
+  cbind(strain = "U5-05")%>%
+  merge(ACD, by = c("strain", "solvent"))
+
+
+hj2<-hj%>% 
+  mutate(AVE_con_rel_mu = AVE_mu/CPmu, AVE_con_rel_auc = AVE_auc/CPauc)
+

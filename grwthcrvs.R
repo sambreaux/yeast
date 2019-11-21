@@ -2,7 +2,7 @@ getwd()
 library(tidyverse)
 library(plater)
 library(formattable)
-install.packages("formattable") 
+
 GD<-read.csv("C:/Users/Sam/Downloads/2019-05-25_summarised-data.csv")
 
 read_plate("C:/Users/Sam/documents/design.csv")
