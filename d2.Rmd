@@ -127,6 +127,7 @@ average_sample_stats <- aggregate(list(AVE_A=d2_sum_metrics$A,
 ```
 
 ```{r plots}
+library(viridis)
 d2_sum_measures<-merge(d2_sum_metrics, data_meas1)
 
 write.csv(d2_sum_metrics, "C:/Users/Sam/documents/yeast/RF2/d2_sum_mets.csv" )
@@ -140,10 +141,11 @@ d2_sum_measures%>%
     geom_notched_border() +
     geom_col_label() + 
     geom_row_label() + 
-    geom_well_rect(aes(fill = control, alpha = rel_fit_on_plate)) + 
+    geom_well_rect(aes(fill = rel_fit_on_plate)) + 
     geom_well_line(aes(x = runtime, y = measure)) + 
-    geom_well_text(aes(label = sample)) + 
-    facet_wrap(~plate, ncol = 1)
+    geom_well_text(aes(label = sample))+
+  scale_fill_viridis(option = "A") +
+    facet_wrap(~plate, ncol = 2)
 
 d2_sum_measures%>% 
     unnest() %>% 
