@@ -22,9 +22,9 @@ library(cowplot)
 ```{r load data}
 ##load data proccessed
 
-sum_dat<-read.csv("drug_run3_sum_dat.csv")
+sum_dat<-read.csv("D3_sD.csv")
 
-Meas_dat<-read.csv("drug_run3_meas-dat.csv")
+Meas_dat<-read.csv("D3_mD.csv")
 
 ## merge PD with Plate Map
 
@@ -145,9 +145,9 @@ d2_sum_measures3%>%
     geom_notched_border() +
     geom_col_label() + 
     geom_row_label() + 
-    geom_well_rect(aes(fill = control, alpha = rel_fit_on_plate)) + 
-    geom_well_line(aes(x = runtime, y = measure)) + 
-    geom_well_text(aes(label = sample)) + 
+    geom_well_rect(aes(fill = rel_fit_on_plate)) + 
+    geom_well_line(aes(x = runtime, y = measure))   +
+  scale_fill_viridis(option = "A") + 
     facet_wrap(~plate, ncol = 1)
 
 d2_sum_measures3%>% 

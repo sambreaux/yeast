@@ -22,9 +22,9 @@ library(cowplot)
 ```{r load data}
 ##load data proccessed
 
-sD<-read.csv("2019-07-24_summarised-data.csv")
+sD<-read.csv("D2_sD.csv")
 
-MD<-read.csv("2019-07-24_measures-data (1).csv")
+MD<-read.csv("D2_mD.csv")
 
 ## merge PD with Plate Map
 
@@ -130,8 +130,8 @@ average_sample_stats <- aggregate(list(AVE_A=d2_sum_metrics$A,
 library(viridis)
 d2_sum_measures<-merge(d2_sum_metrics, data_meas1)
 
-write.csv(d2_sum_metrics, "C:/Users/Sam/documents/yeast/RF2/d2_sum_mets.csv" )
-write.csv(average_sample_stats, "C:/Users/Sam/documents/yeast/RF2/d2_ave_sum_mets.csv")
+#write.csv(d2_sum_metrics, "C:/Users/Sam/documents/yeast/RF2/d2_sum_mets.csv" )
+#write.csv(average_sample_stats, "C:/Users/Sam/documents/yeast/RF2/d2_ave_sum_mets.csv")
 
 d2_sum_measures%>% 
     unnest() %>% 

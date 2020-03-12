@@ -56,9 +56,32 @@ drug3_mu2<-drug3_mu[drug3_mu$control !=2,]%>%
 
 d3_mu<-merge(drug3_mu2, half2.3)
 
+plate<- c("S1L1", "S1L2", "S2L1","S2L2","S3L1","S3L2")
+strain<-c("S6.14","S6.45", "S6.113", "U5.05","W.34.70","WLP.644")
+
+ps4<-as.data.frame(cbind(plate,strain))
+
+drug4_mu<-d4_sum_metrics%>%
+  select( mu, sample, well,plate, control, solvent )%>%
+  merge(ps4)%>%
+  select(-plate)
 
 
-samples_max_gr<-merge(d3_mu, d2_mu, drop = F)
+half2.4<-drug4_mu%>%
+  select(strain, sample, mu, control)
+half2.4<-half2.4[half2.4$control !=1,] %>%
+  select(-control)%>%
+  rename_col_by_position(3,"d4_mu_2")
+drug4_mu2<-drug4_mu[drug4_mu$control !=2,]%>%
+  select(-control)%>%
+  rename_col_by_position(1, "d4_mu")
+
+d4_mu<-merge(drug4_mu2, half2.4)
+
+
+
+samples_max_gr<-merge(d3_mu, d2_mu, drop = F)%>%
+  merge(d4_mu, drop = F)
 
 #need to: find mean and SD 
 #split by strain and solvent and arrange by control 
@@ -71,13 +94,13 @@ max_gr<-samples_max_gr%>%
   split(samples_max_gr$strain, drop = F)
 
 S113solv<-max_gr$S6.113
-strain <-s113sol
+
 
 s113solv<-split(S113solv, S113solv$solvent, drop = F)
 
 s113dmso<-s113solv$DMSO
 
-S113DMSO<-melt(s113dmso,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)
+S113DMSO<-melt(s113dmso,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2'), value.name = "mu", na.rm = T)
  
 s113d<-S113DMSO%>%
   mutate_at(vars(sample), funs (factor))
@@ -99,7 +122,7 @@ ss$sample <- ordered(ss$sample,
                                     "Triclosan"   ))
 
 
-sg<-group_by(ss, sample) %>%
+sg<-group_by(s113h2o, sample) %>%
   summarise(
     count = n(),
     mean = mean(mu, na.rm = TRUE),
@@ -109,7 +132,7 @@ sg<-group_by(ss, sample) %>%
 #####
 s113h2o<-s113solv$H2O
 
-s113h2o<-melt(s113h2o,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
+s113h2o<-melt(s113h2o,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2',"d4_mu", "d4_mu_2"), value.name = "mu", na.rm = T)%>%
   mutate_at(vars(sample), funs (factor))
 
 
@@ -128,7 +151,7 @@ s113h2o$sample <- ordered(s113h2o$sample,
      
 s113ETOH<-s113solv$ETOH
 
-s113ETOH<-melt(s113ETOH,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
+s113ETOH<-melt(s113ETOH,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2'), value.name = "mu", na.rm = T)%>%
   mutate_at(vars(sample), funs (factor))
 
 
@@ -140,6 +163,12 @@ s113ETOH$sample <- ordered(s113ETOH$sample,
                          
      levels(s113ETOH$sample)                 
                         
+```
+
+
+
+```{r anova}
+`
 ```
 
 ```{r plots}
@@ -234,7 +263,26 @@ samples_p_sig<- samples_pvalues%>%
   mutate(sig = ifelse(test = (p_adj <= .05), 
                       yes = 1,
                       no = 0))
+samp_sig<-samples_p_sig%>%
+  select(sample, sig)
 
+xtx<-as.data.frame(table(samp_sig))
+
+hhhh<-xtx%>%
+  mutate(f_sig = ifelse(test = (Freq == 6),
+                        yes = 1,
+                        no =  0))%>%
+  select(-Freq)
+hhhh$f_sig[hhhh$f_sig == 0]<-NA
+sig_drug<-na.omit(hhhh)
+
+sig_drugs<-sig_drug%>%
+  mutate(significance = ifelse(test = (sig == 0),
+                        yes = "Never",
+                        no =  "Always"))%>%
+  select(-sig, -f_sig)
+write.csv(sig_drugs, "C:/Users/SamBr/documents/yeast/RF2/sig_drugs_d2-4.csv")
+write.csv(samples_p_sig, "C:/Users/SamBr/documents/yeast/RF2/sample_p_value_d2-4.csv")
 ```
 
 
@@ -261,7 +309,7 @@ meas_pvalues_3<- left_join(d2_sum_measures3x, samples_p_sig2, by = c("plate", "s
     facet_wrap(~plate, ncol = 1) 
 
 
-?facet_wrap
+
 ```
 
 
@@ -322,5 +370,7 @@ w34_msd<-get_mean_SD(max_gr$W.34.70)
 
 
 samples_mean_sd<- rbind(s14_msd,s45_msd,s113_msd,u5_msd, wlp_msd,w34_msd)
+write.csv(samples_mean_sd, "C:/Users/SamBr/documents/yeast/RF2/samples_mean_sd_d2-4.csv")
+
 
 ```

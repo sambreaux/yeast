@@ -27,6 +27,20 @@ load proccessed data
 - merege with plate meta data
 
 load meassure data
+PLATE GROUPS
+A01->A02, B02, C02, G02, A03, A04, A05, A06, C03, E03, G03, H03, B04, C04, D04, E04, F04, G04, C05, D05, E05, F05, G05, B06, C06, D06, E06, F06, G06, H06
+
+B01->D01, F01, H01, D02, E02, F02, H02, B03, F03, H04, B05, G05
+
+C01->E01, G01, D03
+
+A07->A08, B08, C08, G08, A11, A09, A10, A12, C09, E09, G09, H09, B10, C10, D10, E10, F10, G10, C11, D11, E11, F11, G11, B12, C12, D12, E12, F12, G12, H12
+
+B07->D07, F07, H07, D08, E08, F08, H08, B09, F09, H10, B11, G11
+
+C01->E07, G07, D09
+
+
 ```{r rename by postion}
 
 rename_col_by_position <- function(df, position, new_name) {
@@ -541,7 +555,7 @@ s_solv<-split(s_solv, s_solv$solvent, drop = F)
 
 xdmso<-s_solv$DMSO
 
-xdmso<-melt(xdmso,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
+xdmso<-melt(xdmso,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2','d4_mu' ,'d4_mu_2'), value.name = "mu", na.rm = T)%>%
   mutate_at(vars(sample), funs (factor))
 
 
@@ -560,7 +574,7 @@ xdmso$sample <- ordered(xdmso$sample,
 ###
 xh2o<-s_solv$H2O
 
-xh2o<-melt(xh2o,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
+xh2o<-melt(xh2o,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2','d4_mu','d4_mu_2' ), value.name = "mu", na.rm = T)%>%
   mutate_at(vars(sample), funs (factor))
 
 
@@ -580,7 +594,7 @@ xh2o$sample <- ordered(xh2o$sample,
      
 xETOH<-s_solv$ETOH
 
-xETOH<-melt(xETOH,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
+xETOH<-melt(xETOH,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2','d4_mu','d4_mu_2' ), value.name = "mu", na.rm = T)%>%
   mutate_at(vars(sample), funs (factor))
 
 
@@ -643,10 +657,10 @@ pvalues<-rbind(boh,boe, bo)%>%
 
 
 
-dddddd<- get_p_values(max_gr$S6.45)
+
 ```
 
-```{r pvalues on plate}
+```{r pvalues off plate}
 
 
   
@@ -777,7 +791,7 @@ pvalues<-rbind(boh,boe, bo)%>%
 
 
 
-dddddd<- get_p_values_off(max_gr$S6.45, dataC, "S6-45")
+
 ```
 
 ```{r mean SD}
@@ -791,7 +805,7 @@ s_solv<-split(s_solv, s_solv$solvent, drop = F)
 
 xdmso<-s_solv$DMSO
 
-xdmso<-melt(xdmso,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
+xdmso<-melt(xdmso,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ,'d4_mu','d4_mu_2'), value.name = "mu", na.rm = T)%>%
   mutate_at(vars(sample), funs (factor))
 
 
@@ -815,7 +829,7 @@ xd<-group_by(xdmso, sample) %>%
 ###
 xh2o<-s_solv$H2O
 
-xh2o<-melt(xh2o,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
+xh2o<-melt(xh2o,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2','d4_mu','d4_mu_2' ), value.name = "mu", na.rm = T)%>%
   mutate_at(vars(sample), funs (factor))
 
 
@@ -840,7 +854,7 @@ xh2o$sample <- ordered(xh2o$sample,
      
 xETOH<-s_solv$ETOH
 
-xETOH<-melt(xETOH,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
+xETOH<-melt(xETOH,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ,'d4_mu','d4_mu_2'), value.name = "mu", na.rm = T)%>%
   mutate_at(vars(sample), funs (factor))
 
 
