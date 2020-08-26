@@ -1,0 +1,134 @@
+---
+title: "drug_plate_3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(plater)
+library(formattable)
+library(dplyr)
+library(zoo)
+library(htmlTable)
+library(reshape2)
+library(mtpview1)
+library(stringr)
+library(scales)
+library(cowplot)
+```
+
+
+```{r load data}
+##load data proccessed
+
+sum_dat<-read.csv("drug_run3_sum_dat.csv")
+
+Meas_dat<-read.csv("drug_run3_meas-dat.csv")
+
+## merge PD with Plate Map
+
+data_sum <- add_plate(
+  data = sum_dat, 
+  file = "PLATE MAP.csv",
+  well_ids_column = "well")
+
+data_meas <- add_plate(
+  data = Meas_dat, 
+  file = "PLATE MAP.csv",
+  well_ids_column = "well")
+
+##split dataframe based on plate 
+x<-split(data_sum, data_sum$plate, drop = F)
+xx<-split(data_meas, data_meas$plate, drop = F)
+
+```
+
+```{r ds, include=FALSE}
+
+S6.14<-x$S1L1
+S6.45<-x$S1L2
+s6.113<-x$S2L1
+u5.05<-x$S2L2
+wlp.644<-x$S3L1
+W.34.70<-x$S3L2
+
+
+S6.14mx<-xx$S1L1%>%
+  arrange(runtime)
+S6.45mx<-xx$S1L2%>%
+  arrange(runtime)
+s6.113mx<-xx$S2L1%>%
+  arrange(runtime)
+u5.05mx<-xx$S2L2%>%
+  arrange(runtime)
+wlp.644mx<-xx$S3L1%>%
+  arrange(runtime)
+W.34.70mx<-xx$S3L2%>%
+  arrange(runtime)
+```
+
+```{r auc reltive_fitnes }
+U5auc_rel<-calc_AUC_plate(u5.05mx)%>%
+  rel_fit()
+S14auc_rel<-calc_AUC_plate(S6.14mx)%>%
+  rel_fit()
+S45auc_rel<-calc_AUC_plate(S6.45mx)%>%
+  rel_fit()
+S113auc_rel<-calc_AUC_plate(s6.113mx)%>%
+  rel_fit()
+W34auc_rel<-calc_AUC_plate(W.34.70mx)%>%
+  rel_fit()
+Wlpauc_rel<-calc_AUC_plate(wlp.644mx)%>%
+  rel_fit()
+
+samples_relative_AUC<-rbind(U5auc_rel,S14auc_rel,S45auc_rel,S113auc_rel,W34auc_rel,Wlpauc_rel)
+```
+
+
+```{r doubling time and percent inhibition}
+
+U5dtpi<-doubling_inhibtion(u5.05)
+S14dtpi<-doubling_inhibtion(S6.14)
+S45dtpi<-doubling_inhibtion(S6.45)
+S113dtpi<-doubling_inhibtion(s6.113)
+W34dtpi<-doubling_inhibtion(W.34.70)
+Wlpdtpi<-doubling_inhibtion(wlp.644)
+
+sample_dt_pi<-rbind(U5dtpi, S14dtpi, S45dtpi, S113dtpi, W34dtpi, Wlpdtpi)
+```
+
+```{r summary metrics}
+sum_metrics<-merge(samples_relative_AUC, sample_dt_pi, drop = FALSE)
+```
+
+```{r averages}
+
+
+average_sample_stats <- aggregate(list(AVE_A= sum_metrics$A, 
+                                       AVE_mu= sum_metrics$mu, 
+                                       AVE_lambda= sum_metrics$lambda,
+                                       AVE_DT= sum_metrics$DT, 
+                                       AVE_auc= sum_metrics$auc,
+                                       ave_rel_inhib = sum_metrics$percent_inhib_onplate,
+                                       ave_rel_fit = sum_metrics$rel_fit_on_plate), 
+                           by = list(compound=sum_metrics$sample, plate= sum_metrics$plate), mean)%>%
+  distinct()
+write.csv(average_sample_stats, "C:/Users/Sam/documents/yeast/RF2/ave_sum_mets.csv")
+```
+
+```{r plots}
+
+data_meas<-data_meas%>%
+  select(-solvent)
+sum_measures<-merge(sum_metrics, data_meas, drop = FALSE)
+
+write.csv(sum_metrics, "C:/Users/Sam/documents/yeast/RF2/sum_mets.csv" )
+
+
+plot_percent_inhib(sum_measures)
+
+```
+
+
+

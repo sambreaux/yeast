@@ -23,24 +23,7 @@ library(stringr)
 library(scales)
 ```
 
-load proccessed data
-- merege with plate meta data
-
-load meassure data
-PLATE GROUPS
-A01->A02, B02, C02, G02, A03, A04, A05, A06, C03, E03, G03, H03, B04, C04, D04, E04, F04, G04, C05, D05, E05, F05, G05, B06, C06, D06, E06, F06, G06, H06
-
-B01->D01, F01, H01, D02, E02, F02, H02, B03, F03, H04, B05, G05
-
-C01->E01, G01, D03
-
-A07->A08, B08, C08, G08, A11, A09, A10, A12, C09, E09, G09, H09, B10, C10, D10, E10, F10, G10, C11, D11, E11, F11, G11, B12, C12, D12, E12, F12, G12, H12
-
-B07->D07, F07, H07, D08, E08, F08, H08, B09, F09, H10, B11, G11
-
-C01->E07, G07, D09
-
-
+Function: renames column based off of column number rather than name
 ```{r rename by postion}
 
 rename_col_by_position <- function(df, position, new_name) {
@@ -50,7 +33,9 @@ rename_col_by_position <- function(df, position, new_name) {
 }
 ```
 
-split list into dataframe based on strain 
+Function: calculates doubling time and percent inhibition 
+percent inhition based off of change in maximum growth rate MU
+also caluclutes percent inhibtion based off on off plate controls (if you have control values) 
 ```{r doublingtime and inhib}
 
 doubling_time<- function(x){
@@ -115,9 +100,8 @@ off_plate_perecnt_inhibition <- function( y, x, z){
 #y= table sample summary measures
 #z = current sample name in ""
 
-doubling_inhibtion<-function(y,x,z){
+doubling_inhibtion<-function(y){
   y%>%
-  off_plate_perecnt_inhibition(x,z)%>%
   percent_inhib_onplate()%>%
   doubling_time()
 }
@@ -283,6 +267,8 @@ calc_AUC_plate <- function(BY4743m){
 
 ```
 
+Function: calculate Area Under the Curve for the control plate
+
 ```{r control AUC}
 calc_AUC2 <- function(n,z){
   x <- n %>%
@@ -438,6 +424,7 @@ calc_AUC_plate2 <- function(BY4743m){
 ```
 
 FUNCTION: calculate relative fitness: on plate, off plate, and to by4743
+measure dervived from area under the curve 
 ```{r relfit}
 ## to by4743
 #x = byauc data
@@ -457,7 +444,7 @@ rel_fit_to_BY<-  function(y, x){
 
 ##on plate
 # x = plate auc
-on_plate_rel_fit<- function(x){
+rel_fit<- function(x){
   
   rel_scores<-reshape2::dcast(x, well~plate, fun.aggregate = mean, value.var = "auc")%>%
     column_to_rownames(var="well")
@@ -514,7 +501,7 @@ off_plate_rel_fit<- function(x, y, z){
 #d = BY4743 auc measures
 relative_fitness<-function(a,b,c,d){
 by_rels<-off_plate_rel_fit(a, b, c)%>%
-  on_plate_rel_fit()%>%
+  rel_fit()%>%
   rel_fit_to_BY(d)
 }
 
@@ -522,8 +509,8 @@ by_rels<-off_plate_rel_fit(a, b, c)%>%
 
  
 
-FUNCTION: calculate average ofeach metric for each compound
-```{r ploy relfit}
+FUNCTION: plots relative fitness
+```{r plot relfit}
 plot_rel_fit <- function(X){ 
   X%>% 
     mutate(plate = 1) %>% 
@@ -541,7 +528,7 @@ plot_rel_fit <- function(X){
 }
 ```
 
-
+FUNCTION: gets P value for each substance by solvent control by maximum growth rate 
 ```{r pvalues}
 
 #list_frame= list$strain where strain contains values to be tested (mu)
@@ -555,7 +542,7 @@ s_solv<-split(s_solv, s_solv$solvent, drop = F)
 
 xdmso<-s_solv$DMSO
 
-xdmso<-melt(xdmso,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2','d4_mu' ,'d4_mu_2'), value.name = "mu", na.rm = T)%>%
+xdmso<-melt(xdmso,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
   mutate_at(vars(sample), funs (factor))
 
 
@@ -574,7 +561,7 @@ xdmso$sample <- ordered(xdmso$sample,
 ###
 xh2o<-s_solv$H2O
 
-xh2o<-melt(xh2o,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2','d4_mu','d4_mu_2' ), value.name = "mu", na.rm = T)%>%
+xh2o<-melt(xh2o,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
   mutate_at(vars(sample), funs (factor))
 
 
@@ -594,7 +581,7 @@ xh2o$sample <- ordered(xh2o$sample,
      
 xETOH<-s_solv$ETOH
 
-xETOH<-melt(xETOH,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2','d4_mu','d4_mu_2' ), value.name = "mu", na.rm = T)%>%
+xETOH<-melt(xETOH,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
   mutate_at(vars(sample), funs (factor))
 
 
@@ -657,143 +644,10 @@ pvalues<-rbind(boh,boe, bo)%>%
 
 
 
-
+dddddd<- get_p_values(max_gr$S6.45)
 ```
 
-```{r pvalues off plate}
-
-
-  
-
-#list_strain= list$strain where strain contains values to be tested (mu)
-get_p_values_off<-function(list_strain, off_summary, current_sample){
- 
-  control_mu<-off_summary%>%
-  select(mu, compound, strain)%>%
-  rename_col_by_position(2, "sample")%>%
-  rename_col_by_position(3, "variable") 
-
- s_solv<-list_strain
-strain <-s_solv$strain
-
-s_solv<-split(s_solv, s_solv$solvent, drop = F)
-
-##
- off_dmso<- control_mu[control_mu$sample == "DMSO",]
-  off_dmso<-off_dmso[off_dmso$variable == current_sample,]
-
-
-xdmso<-s_solv$DMSO
-
-xdmso<-melt(xdmso,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
-  mutate_at(vars(sample), funs (factor))%>%rbind(off_dmso)
-
-xdmso$sample <- ordered(xdmso$sample,
-                         levels = c("DMSO", "DMSO control", 
-                                    "5-Fluorouracil" ,"6-Azauracil","CCCP",
-                                    "Cinnamic acid","Cycloheximide","EDTA",
-                                    "Fluconazole", "Guanidine hydrochloride","Miconazole Nitrate", 
-                                    "Miltefosine","Nystatin ", "Triclosan"   ))
-
-
-
-###
-
- off_h2o<- control_mu[control_mu$sample == "H2O",]
-  off_h2o<-off_h2o[off_h2o$variable == current_sample,]
-  
-xh2o<-s_solv$H2O
-
-xh2o<-melt(xh2o,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
-  mutate_at(vars(sample), funs (factor))%>%rbind(off_h2o)
-
-xh2o$sample <- ordered(xh2o$sample,
-                         levels = c( "H2O","H2O control ", 
-                                    "2-Deoxy-D-glucose" , "3-Amino-1,2,4- triazole" , "4-Aminopyridine" ,"5-Fluorocytosine" , "Azaserine*",
-                                    "Benzamidine" , "Blasticidin hydrochloride" ,"Caffeine", "Cetylpyridinium chloride",
-                                    "Chlorpromazine hydrochloride ", "Compound 48/80*" , "Copper(II) sulfate", "Dequalinium Chloride" , 
-                                    "Diamide", "DTT", "Hydroxyurea" , "Hygromycin B" , "methylmethane sulfonate", "Pentamidine Isethionate",
-                                    "Poly-L-lysine hydrochloride" ,  "Sodium Fluoride" ,"Sodium metasilicate" , "Sodium Orthovanadate" ,
-                                    "Sodium Selenate","Tamoxifen","Tartaric acid" ,"Thialysine","Thiourea" ,"Trifluoperazine" ,
-                                    "Urea hydrogen peroxide"))
-                         
-     
-
-###
-  
-off_ETOH<- control_mu[control_mu$sample == "ETOH",]
-  off_ETOH<-off_ETOH[off_ETOH$variable == current_sample,]
-   
-xETOH<-s_solv$ETOH
-
-xETOH<-melt(xETOH,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
-  mutate_at(vars(sample), funs (factor))%>%
-  rbind(off_ETOH)
-
-
-
-xETOH$sample <- ordered(xETOH$sample,
-                         levels = c( "ETOH","ETOH control ", 
-                                    "Menadione ",
-                                    "Myclobutanil",
-                                    "Propiconazole"))
-                         
-     
-
-###################     
-    
-  vv<-pairwise.t.test(xdmso$mu, xdmso$sample,
-                 p.adjust.method = "fdr")
-bo<-as.data.frame (vv$p.value)  %>%
-  rename_col_by_position(1, "p_adj" )%>%
-  select("p_adj")%>%
-  rownames_to_column( var = "sample")
-  
-
-
-
-
-
-
-########
-
-
-vvh<-pairwise.t.test(xh2o$mu, xh2o$sample,
-                 p.adjust.method = "fdr")
-boh<-as.data.frame (vvh$p.value)  %>%
-  rename_col_by_position(1, "p_adj" )%>%
-  select("p_adj")%>%
-  rownames_to_column( var = "sample")
-  
-
-
-
-##########
-
- 
-vve<-pairwise.t.test(xETOH$mu, xETOH$sample,
-                 p.adjust.method = "fdr")
-
-boe<-as.data.frame (vve$p.value) %>%
-  rename_col_by_position(1, "p_adj" )%>%
-  select("p_adj")%>%
-  rownames_to_column( var = "sample")
- 
-
-#################################################### 
-
-pvalues<-rbind(boh,boe, bo)%>%
-  merge( strain)%>%
-  rename_col_by_position(3, strain)%>%
-  unique()
-} 
-
-
-
-
-
-```
-
+FUNCTION: calculates the standard devation of each compound's effect on maximum growth rate
 ```{r mean SD}
 get_mean_SD<-function(list_strain){
   
@@ -805,7 +659,7 @@ s_solv<-split(s_solv, s_solv$solvent, drop = F)
 
 xdmso<-s_solv$DMSO
 
-xdmso<-melt(xdmso,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ,'d4_mu','d4_mu_2'), value.name = "mu", na.rm = T)%>%
+xdmso<-melt(xdmso,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
   mutate_at(vars(sample), funs (factor))
 
 
@@ -829,7 +683,7 @@ xd<-group_by(xdmso, sample) %>%
 ###
 xh2o<-s_solv$H2O
 
-xh2o<-melt(xh2o,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2','d4_mu','d4_mu_2' ), value.name = "mu", na.rm = T)%>%
+xh2o<-melt(xh2o,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
   mutate_at(vars(sample), funs (factor))
 
 
@@ -854,7 +708,7 @@ xh2o$sample <- ordered(xh2o$sample,
      
 xETOH<-s_solv$ETOH
 
-xETOH<-melt(xETOH,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ,'d4_mu','d4_mu_2'), value.name = "mu", na.rm = T)%>%
+xETOH<-melt(xETOH,id.vars = 'sample', measure.vars = c('d2_mu', 'd2_mu_2','d3_mu', 'd3_mu_2' ), value.name = "mu", na.rm = T)%>%
   mutate_at(vars(sample), funs (factor))
 
 
