@@ -509,11 +509,10 @@ by_rels<-off_plate_rel_fit(a, b, c)%>%
 
  
 
-FUNCTION: plots relative fitness
-```{r plot relfit}
-plot_rel_fit <- function(X){ 
-  X%>% 
-    mutate(plate = 1) %>% 
+FUNCTION: plots percent inhibition of each well 
+```{r plot percent inhib}
+#x=sum_measures
+plot_percent_inhib<-function(x){x%>% 
     unnest() %>% 
     mtp_ggplot(aes(plate = plate, well = well)) + 
     mtp_spec_96well() + 
@@ -521,10 +520,11 @@ plot_rel_fit <- function(X){
     geom_notched_border() +
     geom_col_label() + 
     geom_row_label() + 
-    geom_well_rect(aes(fill = control, alpha = rel_fit_on_plate)) + 
+    geom_well_rect(aes(fill = percent_inhib_onplate)) + 
     geom_well_line(aes(x = runtime, y = measure)) + 
-    geom_well_text(aes(label = sample))
-  
+    geom_well_text(aes(label = sample))+
+  scale_fill_viridis(option = "A") +
+    facet_wrap(~plate, ncol = 1)
 }
 ```
 
@@ -643,8 +643,6 @@ pvalues<-rbind(boh,boe, bo)%>%
 
 
 
-
-dddddd<- get_p_values(max_gr$S6.45)
 ```
 
 FUNCTION: calculates the standard devation of each compound's effect on maximum growth rate

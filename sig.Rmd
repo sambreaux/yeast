@@ -167,10 +167,6 @@ s113ETOH$sample <- ordered(s113ETOH$sample,
 
 
 
-```{r anova}
-`
-```
-
 ```{r plots}
 ggboxplot(s113ETOH, x = "sample", y = "mu", 
           color = "sample", palette = viridis(31),
@@ -312,24 +308,6 @@ meas_pvalues_3<- left_join(d2_sum_measures3x, samples_p_sig2, by = c("plate", "s
 
 ```
 
-
-```{r off_plate_p }
-s14_pvo<-get_p_values_off(max_gr$S6.14, dataC, "S6-14")
-s45_pvo<-get_p_values_off(max_gr$S6.45, dataC, "S6-45")
-s113_pvo<-get_p_values_off(max_gr$S6.113, dataC, "S6-113")
-u5_pvo<-get_p_values_off(max_gr$U5.05,  dataC, "U5-05")
-wlp_pvo<-get_p_values_off(max_gr$WLP.644, dataC, "WLP-644")
-w34_pvo<-get_p_values_off(max_gr$W.34.70, dataC, "W-34/70")
-
-
-samples_pvalues_off<-rbind(s14_pvo,s45_pvo,s113_pvo,u5_pvo,wlp_pvo, w34_pvo)
-
-
-samples_p_sig_off<- samples_pvalues_off%>%
-  mutate(sig = ifelse(test = (p_adj <= .05), 
-                      yes = 1,
-                      no = 0))
-```
 
 
 ```{r plot}

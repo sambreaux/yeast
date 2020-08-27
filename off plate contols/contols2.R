@@ -33,7 +33,7 @@ s14<-strains_list$S1L1%>%
 s45<-strains_list$S1L2%>%
   rename_col_by_position(3, 'mu_s45')%>%
   select(-strain,-plate)
-s113<-strains_list$S2L1%>%
+s113<-strains_list$S2L2%>%
   rename_col_by_position(3, 'mu_s113')%>%
   select(-strain,-plate)
 u5<-strains_list$S2L2%>%
@@ -51,57 +51,10 @@ strain_mu<-merge(s14,s45)%>%
   merge(u5)%>%
   merge(wlp)%>%
   merge(w34)%>%
-  select(-well)
-ddd<-melt(strain_mu)
+  select(-well)%>%
+  column_to_rownames("solvent")
 
 
-res.pca <- prcomp(strain_mu[2:7], scale = TRUE, center = T)
-summary(res.pca)
-plot(res.pca)
-library("factoextra")
-fviz_pca_ind(res.pca,
-             col.ind = "cos2", # Color by the quality of representation
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             repel = TRUE     # Avoid text overlapping
-)
-fviz_pca_var(res.pca,
-             col.var = "contrib", # Color by contributions to the PC
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             repel = TRUE     # Avoid text overlapping
-)
-library(viridis)
-
-groups<-as.factor(strain_mu$solvent)
-fviz_pca_biplot(res.pca, repel = TRUE,
-                col.var = "#2E9FDF", # Variables color
-                col.ind = groups,
-                palette = viridis(3),
-                addEllipses = TRUE, # Concentration ellipses
-                ellipse.type = "confidence",
-                legend.title = "Groups"
-)
-
-library("corrplot")
-var<- get_pca_var(res.pca)
-corrplot(var$contrib, is.corr=FALSE) 
-
-######################
-solv_list<-split(con_mu, con_mu$solvent)
-
-dmso<-solv_list$DMSO%>%
-  rename_col_by_position(3, 'mu_dmso')%>%
-  select(-solvent,-plate,-well)
-etoh<-solv_list$ETOH%>%
-  rename_col_by_position(3, 'mu_etoh')%>%
-  select(-solvent,-plate,-well)
-h2o<-solv_list$H2O%>%
-  rename_col_by_position(3, 'mu_h2o')%>%
-  select(-solvent,-plate,-well)
-
-fff<-left_join(dmso,etoh,h2o)
-
-
-######
 
 write.csv(sum_D, "control_sum_meas.csv")
 
